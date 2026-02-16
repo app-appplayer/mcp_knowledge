@@ -1,0 +1,84 @@
+## [0.1.0] - Initial Release
+
+### Added
+
+#### Core Features
+- **KnowledgeSystem**
+  - Unified entry point for all knowledge operations
+  - Configuration management with `KnowledgeConfig`
+  - Port-based dependency injection with `KnowledgePorts`
+  - Graceful shutdown and lifecycle management
+
+- **Facades**
+  - `FactFacade` for simplified fact operations
+  - `SkillFacade` for skill execution
+  - `ProfileFacade` for profile rendering
+  - `BundleFacade` for bundle management
+
+- **Bridges**
+  - `SkillFactBridge` for connecting skill outputs to fact graph
+  - `ProfileFactBridge` for injecting fact context into profiles
+  - `BundleSystemBridge` for deploying bundles across subsystems
+
+- **Event System**
+  - `KnowledgeEventBus` for event distribution
+  - Typed event streams with `on<T>()` method
+  - Event subscription with handlers
+
+- **Events**
+  - `FactConfirmedEvent` - when a candidate becomes a fact
+  - `CandidateCreatedEvent` - when a new candidate is created
+  - `SummaryRefreshedEvent` - when a summary is updated
+  - `SkillExecutedEvent` - when a skill completes
+  - `ClaimsRecordedEvent` - when claims are recorded
+  - `ProfileRenderedEvent` - when a profile is rendered
+  - `BundleLoadedEvent` - when a bundle is deployed
+  - `PipelineCompletedEvent` - when a pipeline finishes
+  - `SystemShutdownEvent` - when system shuts down
+
+- **Configuration**
+  - `KnowledgeConfig` with hierarchical settings
+  - `FactGraphConfig` for fact graph settings
+  - `SkillConfig` for skill execution settings
+  - `ProfileConfig` for profile rendering settings
+  - `SchedulerConfig` for scheduling settings
+  - `EventConfig` for event system settings
+  - `LoggingConfig` for logging settings
+  - `FeatureFlags` for feature toggles
+  - Preset configurations: `defaults`, `development`, `production`
+
+- **Ports**
+  - `KnowledgePorts` unified port container
+  - `StoragePort` for data persistence
+  - `LlmPort` for LLM integration
+  - `McpPort` for MCP communication
+  - `EvidencePort` for evidence processing
+  - `ExpressionPort` for template evaluation
+  - Stub implementations for testing
+
+- **Adapters**
+  - `SkillPortsAdapter` for skill port conversion
+  - `ProfilePortsAdapter` for profile port conversion
+  - `FactGraphPortsAdapter` for fact graph port conversion
+
+### Integration
+- Integrates `mcp_bundle` for bundle management
+- Integrates `mcp_fact_graph` for knowledge storage
+- Integrates `mcp_skill` for AI capabilities
+- Integrates `mcp_profile` for AI personas
+- Integrates `mcp_knowledge_ops` for operations
+
+### Architecture
+- Facade pattern for simplified APIs
+- Bridge pattern for cross-package integration
+- Event-driven architecture for loose coupling
+- Port-based dependency injection
+
+---
+
+## Support and Contributing
+
+- [Report Issues](https://github.com/app-appplayer/mcp_knowledge/issues)
+- [Join Discussions](https://github.com/app-appplayer/mcp_knowledge/discussions)
+- [Read Documentation](https://github.com/app-appplayer/mcp_knowledge/wiki)
+- [Support Development](https://www.patreon.com/mcpdevstudio)
