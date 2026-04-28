@@ -1,270 +1,324 @@
-/// Knowledge Ports - Unified port container.
+/// Knowledge Ports — flat standard-port container per REDESIGN-PLAN Phase 8.
 ///
-/// Provides a single container for all external dependencies.
+/// `mcp_knowledge` is an orchestrator, not a port provider. This container
+/// only aggregates the standard ports defined in `mcp_bundle` and consumed
+/// by the runtimes that `KnowledgeSystem` orchestrates. Every field maps
+/// directly to a capability-named port from `mcp_bundle` — no wrappers,
+/// no shims, no consumer-sliced legacy ports.
 library;
 
-/// Unified port container for all external dependencies.
+import 'package:mcp_bundle/mcp_bundle.dart';
+
+// Re-export the standard port surface so consumers do not have to import
+// `package:mcp_bundle/...` directly. Only the ports actually carried in
+// `KnowledgePorts` are exposed here.
+export 'package:mcp_bundle/mcp_bundle.dart'
+    show
+        // Data / fact-graph capabilities
+        FactsPort,
+        StubFactsPort,
+        FactRecord,
+        FactQuery,
+        ClaimsPort,
+        StubClaimsPort,
+        ClaimQuery,
+        ClaimValidationReport,
+        EntitiesPort,
+        StubEntitiesPort,
+        EntityRecord,
+        EntityQuery,
+        CandidatesPort,
+        StubCandidatesPort,
+        CandidateRecord,
+        CandidateStatus,
+        EvidencePort,
+        StubEvidencePort,
+        EvidenceFragment,
+        PatternsPort,
+        StubPatternsPort,
+        PatternRecord,
+        PatternQuery,
+        SummariesPort,
+        StubSummariesPort,
+        SummaryRecord,
+        RunsPort,
+        StubRunsPort,
+        ContextBundlePort,
+        StubContextBundlePort,
+        RetrievalPort,
+        StubRetrievalPort,
+        AssetPort,
+        StubAssetPort,
+        IndexPort,
+        // Execution
+        SkillRuntimePort,
+        StubSkillRuntimePort,
+        SkillRunHandle,
+        SkillRegistryPort,
+        McpPort,
+        StubMcpPort,
+        ToolResult,
+        ToolInfo,
+        ResourceInfo,
+        LlmPort,
+        StubLlmPort,
+        EmptyLlmPort,
+        LlmRequest,
+        LlmResponse,
+        LlmMessage,
+        LlmCapabilities,
+        LlmUsage,
+        LlmChunk,
+        LlmTool,
+        LlmToolCall,
+        // Evaluation (mcp_profile capabilities)
+        MetricsPort,
+        StubMetricsPort,
+        AppraisalPort,
+        StubAppraisalPort,
+        DecisionPort,
+        StubDecisionPort,
+        ExpressionPort,
+        StubExpressionPort,
+        ProfileSummariesPort,
+        StubProfileSummariesPort,
+        // Philosophy
+        PhilosophyPort,
+        StubPhilosophyPort,
+        EthosStorePort,
+        StubEthosStorePort,
+        // Ops capabilities (provided by mcp_knowledge_ops)
+        WorkflowPort,
+        StubWorkflowPort,
+        WorkflowRunHandle,
+        WorkflowDescriptor,
+        PipelinePort,
+        StubPipelinePort,
+        PipelineRunHandle,
+        ScheduleTriggerPort,
+        StubScheduleTriggerPort,
+        AuditPort,
+        StubAuditPort,
+        RunbookPort,
+        StubRunbookPort,
+        // Cross-cutting
+        KvStoragePort,
+        InMemoryKvStoragePort,
+        ApprovalPort,
+        StubApprovalPort,
+        NotificationPort,
+        StubNotificationPort,
+        EventPort,
+        InMemoryEventPort,
+        PortEvent,
+        MetricPort,
+        StubMetricPort,
+        MetricValue,
+        // Shared types used by hosts wiring runtimes
+        Period,
+        RelativePeriod,
+        AbsolutePeriod,
+        PeriodUnit,
+        PeriodDirection,
+        DateRange;
+
+/// Flat container of standard ports consumed by `KnowledgeSystem`.
+///
+/// REDESIGN-PLAN Phase 8 §3.1: `mcp_knowledge` exposes **no** ports of its
+/// own. This class is purely a DI bundle so hosts can pass a single value
+/// to [KnowledgeSystem] instead of fifteen positional parameters.
+///
+/// All fields are optional. Hosts wire only the ports they need; the
+/// orchestrator gracefully degrades when a capability is absent.
 class KnowledgePorts {
-  /// Storage port.
-  final StoragePort storage;
+  // ── Data / fact-graph capabilities ──────────────────────────────────────
+  final FactsPort? facts;
+  final ClaimsPort? claims;
+  final EntitiesPort? entities;
+  final CandidatesPort? candidates;
+  final EvidencePort? evidence;
+  final PatternsPort? patterns;
+  final SummariesPort? summaries;
+  final RunsPort? runs;
+  final ContextBundlePort? contextBundle;
+  final RetrievalPort? retrieval;
+  final AssetPort? asset;
+  final IndexPort? index;
 
-  /// LLM port.
-  final LlmPort llm;
+  // ── Execution capabilities ──────────────────────────────────────────────
+  final SkillRuntimePort? skillRuntime;
+  final SkillRegistryPort? skillRegistry;
+  final McpPort? mcp;
+  final LlmPort? llm;
 
-  /// MCP port.
-  final McpPort mcp;
+  // ── Evaluation (profile) capabilities ───────────────────────────────────
+  final MetricsPort? metrics;
+  final AppraisalPort? appraisal;
+  final DecisionPort? decision;
+  final ExpressionPort? expression;
+  final ProfileSummariesPort? profileSummaries;
 
-  /// Evidence processing port.
-  final EvidencePort evidence;
+  // ── Philosophy capabilities ─────────────────────────────────────────────
+  final PhilosophyPort? philosophy;
+  final EthosStorePort? ethosStore;
 
-  /// Expression formatting port.
-  final ExpressionPort expression;
+  // ── Ops capabilities ────────────────────────────────────────────────────
+  final WorkflowPort? workflow;
+  final PipelinePort? pipeline;
+  final ScheduleTriggerPort? scheduler;
+  final AuditPort? audit;
+  final RunbookPort? runbook;
+
+  // ── Cross-cutting capabilities ──────────────────────────────────────────
+  final KvStoragePort? kvStorage;
+  final ApprovalPort? approval;
+  final NotificationPort? notification;
+  final EventPort? event;
+  final MetricPort? metric;
 
   const KnowledgePorts({
-    required this.storage,
-    required this.llm,
-    required this.mcp,
-    required this.evidence,
-    required this.expression,
+    this.facts,
+    this.claims,
+    this.entities,
+    this.candidates,
+    this.evidence,
+    this.patterns,
+    this.summaries,
+    this.runs,
+    this.contextBundle,
+    this.retrieval,
+    this.asset,
+    this.index,
+    this.skillRuntime,
+    this.skillRegistry,
+    this.mcp,
+    this.llm,
+    this.metrics,
+    this.appraisal,
+    this.decision,
+    this.expression,
+    this.profileSummaries,
+    this.philosophy,
+    this.ethosStore,
+    this.workflow,
+    this.pipeline,
+    this.scheduler,
+    this.audit,
+    this.runbook,
+    this.kvStorage,
+    this.approval,
+    this.notification,
+    this.event,
+    this.metric,
   });
 
-  /// Create with stub implementations.
+  /// Test-only stub factory wiring every port to its in-memory stub.
   factory KnowledgePorts.stub() {
     return KnowledgePorts(
-      storage: InMemoryStoragePort(),
+      facts: const StubFactsPort(),
+      claims: const StubClaimsPort(),
+      entities: const StubEntitiesPort(),
+      candidates: const StubCandidatesPort(),
+      evidence: const StubEvidencePort(),
+      patterns: const StubPatternsPort(),
+      summaries: const StubSummariesPort(),
+      runs: const StubRunsPort(),
+      contextBundle: const StubContextBundlePort(),
+      retrieval: const StubRetrievalPort(),
+      asset: const StubAssetPort(),
+      skillRuntime: const StubSkillRuntimePort(),
+      mcp: const StubMcpPort(),
       llm: StubLlmPort(),
-      mcp: StubMcpPort(),
-      evidence: StubEvidencePort(),
-      expression: StubExpressionPort(),
+      metrics: const StubMetricsPort(),
+      appraisal: const StubAppraisalPort(),
+      decision: const StubDecisionPort(),
+      expression: const StubExpressionPort(),
+      profileSummaries: const StubProfileSummariesPort(),
+      philosophy: const StubPhilosophyPort(),
+      ethosStore: const StubEthosStorePort(),
+      workflow: const StubWorkflowPort(),
+      pipeline: const StubPipelinePort(),
+      scheduler: const StubScheduleTriggerPort(),
+      audit: const StubAuditPort(),
+      runbook: const StubRunbookPort(),
+      kvStorage: InMemoryKvStoragePort(),
+      approval: StubApprovalPort(),
+      notification: StubNotificationPort(),
+      event: InMemoryEventPort(),
+      metric: StubMetricPort(),
     );
   }
 
-  /// Create copy with some ports replaced.
+  /// Return a copy with the supplied fields replaced.
   KnowledgePorts copyWith({
-    StoragePort? storage,
-    LlmPort? llm,
-    McpPort? mcp,
+    FactsPort? facts,
+    ClaimsPort? claims,
+    EntitiesPort? entities,
+    CandidatesPort? candidates,
     EvidencePort? evidence,
+    PatternsPort? patterns,
+    SummariesPort? summaries,
+    RunsPort? runs,
+    ContextBundlePort? contextBundle,
+    RetrievalPort? retrieval,
+    AssetPort? asset,
+    IndexPort? index,
+    SkillRuntimePort? skillRuntime,
+    SkillRegistryPort? skillRegistry,
+    McpPort? mcp,
+    LlmPort? llm,
+    MetricsPort? metrics,
+    AppraisalPort? appraisal,
+    DecisionPort? decision,
     ExpressionPort? expression,
+    ProfileSummariesPort? profileSummaries,
+    PhilosophyPort? philosophy,
+    EthosStorePort? ethosStore,
+    WorkflowPort? workflow,
+    PipelinePort? pipeline,
+    ScheduleTriggerPort? scheduler,
+    AuditPort? audit,
+    RunbookPort? runbook,
+    KvStoragePort? kvStorage,
+    ApprovalPort? approval,
+    NotificationPort? notification,
+    EventPort? event,
+    MetricPort? metric,
   }) {
     return KnowledgePorts(
-      storage: storage ?? this.storage,
-      llm: llm ?? this.llm,
-      mcp: mcp ?? this.mcp,
+      facts: facts ?? this.facts,
+      claims: claims ?? this.claims,
+      entities: entities ?? this.entities,
+      candidates: candidates ?? this.candidates,
       evidence: evidence ?? this.evidence,
+      patterns: patterns ?? this.patterns,
+      summaries: summaries ?? this.summaries,
+      runs: runs ?? this.runs,
+      contextBundle: contextBundle ?? this.contextBundle,
+      retrieval: retrieval ?? this.retrieval,
+      asset: asset ?? this.asset,
+      index: index ?? this.index,
+      skillRuntime: skillRuntime ?? this.skillRuntime,
+      skillRegistry: skillRegistry ?? this.skillRegistry,
+      mcp: mcp ?? this.mcp,
+      llm: llm ?? this.llm,
+      metrics: metrics ?? this.metrics,
+      appraisal: appraisal ?? this.appraisal,
+      decision: decision ?? this.decision,
       expression: expression ?? this.expression,
+      profileSummaries: profileSummaries ?? this.profileSummaries,
+      philosophy: philosophy ?? this.philosophy,
+      ethosStore: ethosStore ?? this.ethosStore,
+      workflow: workflow ?? this.workflow,
+      pipeline: pipeline ?? this.pipeline,
+      scheduler: scheduler ?? this.scheduler,
+      audit: audit ?? this.audit,
+      runbook: runbook ?? this.runbook,
+      kvStorage: kvStorage ?? this.kvStorage,
+      approval: approval ?? this.approval,
+      notification: notification ?? this.notification,
+      event: event ?? this.event,
+      metric: metric ?? this.metric,
     );
-  }
-}
-
-// === Storage Port ===
-
-/// Abstract storage port.
-abstract class StoragePort {
-  Future<void> save(String collection, String id, Map<String, dynamic> data);
-  Future<Map<String, dynamic>?> get(String collection, String id);
-  Future<List<Map<String, dynamic>>> query(
-      String collection, QueryFilter filter);
-  Future<void> delete(String collection, String id);
-}
-
-/// Query filter for storage.
-class QueryFilter {
-  final Map<String, dynamic> conditions;
-  final int? limit;
-  final int? offset;
-  final String? orderBy;
-  final bool descending;
-
-  const QueryFilter({
-    this.conditions = const {},
-    this.limit,
-    this.offset,
-    this.orderBy,
-    this.descending = false,
-  });
-}
-
-/// In-memory storage implementation.
-class InMemoryStoragePort implements StoragePort {
-  final Map<String, Map<String, Map<String, dynamic>>> _data = {};
-
-  @override
-  Future<void> save(
-      String collection, String id, Map<String, dynamic> data) async {
-    _data.putIfAbsent(collection, () => {});
-    _data[collection]![id] = data;
-  }
-
-  @override
-  Future<Map<String, dynamic>?> get(String collection, String id) async {
-    return _data[collection]?[id];
-  }
-
-  @override
-  Future<List<Map<String, dynamic>>> query(
-      String collection, QueryFilter filter) async {
-    final collectionData = _data[collection]?.values.toList() ?? [];
-    var result = collectionData;
-    if (filter.limit != null) {
-      result = result.take(filter.limit!).toList();
-    }
-    return result;
-  }
-
-  @override
-  Future<void> delete(String collection, String id) async {
-    _data[collection]?.remove(id);
-  }
-}
-
-// === LLM Port ===
-
-/// Abstract LLM port.
-abstract class LlmPort {
-  Future<LlmResponse> complete(LlmRequest request);
-  Future<List<double>> embed(String text);
-}
-
-/// LLM request.
-class LlmRequest {
-  final String? systemPrompt;
-  final String prompt;
-  final String? model;
-  final double? temperature;
-  final int? maxTokens;
-
-  const LlmRequest({
-    this.systemPrompt,
-    required this.prompt,
-    this.model,
-    this.temperature,
-    this.maxTokens,
-  });
-}
-
-/// LLM response.
-class LlmResponse {
-  final String content;
-  final int? tokensUsed;
-
-  const LlmResponse({required this.content, this.tokensUsed});
-}
-
-/// Stub LLM port.
-class StubLlmPort implements LlmPort {
-  const StubLlmPort();
-
-  @override
-  Future<LlmResponse> complete(LlmRequest request) async {
-    return const LlmResponse(content: 'Stub response');
-  }
-
-  @override
-  Future<List<double>> embed(String text) async {
-    return List.filled(384, 0.0);
-  }
-}
-
-// === MCP Port ===
-
-/// Abstract MCP port.
-abstract class McpPort {
-  Future<ToolResult> callTool(String name, Map<String, dynamic> arguments);
-  Future<Resource> readResource(String uri);
-  Future<List<ToolInfo>> listTools();
-}
-
-/// Tool execution result.
-class ToolResult {
-  final dynamic content;
-  final bool isError;
-
-  const ToolResult({required this.content, this.isError = false});
-}
-
-/// Resource.
-class Resource {
-  final String uri;
-  final String? mimeType;
-  final String content;
-
-  const Resource({required this.uri, this.mimeType, required this.content});
-}
-
-/// Tool information.
-class ToolInfo {
-  final String name;
-  final String? description;
-  final Map<String, dynamic>? inputSchema;
-
-  const ToolInfo({required this.name, this.description, this.inputSchema});
-}
-
-/// Stub MCP port.
-class StubMcpPort implements McpPort {
-  const StubMcpPort();
-
-  @override
-  Future<ToolResult> callTool(
-      String name, Map<String, dynamic> arguments) async {
-    return const ToolResult(content: 'Stub tool result');
-  }
-
-  @override
-  Future<Resource> readResource(String uri) async {
-    return Resource(uri: uri, content: '');
-  }
-
-  @override
-  Future<List<ToolInfo>> listTools() async {
-    return [];
-  }
-}
-
-// === Evidence Port ===
-
-/// Abstract evidence port.
-abstract class EvidencePort {
-  Future<List<String>> extractFragments(String content, String mimeType);
-  Future<double> computeConfidence(String fragment);
-}
-
-/// Stub evidence port.
-class StubEvidencePort implements EvidencePort {
-  const StubEvidencePort();
-
-  @override
-  Future<List<String>> extractFragments(
-      String content, String mimeType) async {
-    return [];
-  }
-
-  @override
-  Future<double> computeConfidence(String fragment) async {
-    return 0.5;
-  }
-}
-
-// === Expression Port ===
-
-/// Abstract expression port.
-abstract class ExpressionPort {
-  String format(String template, Map<String, dynamic> variables);
-  bool validate(String template);
-}
-
-/// Stub expression port.
-class StubExpressionPort implements ExpressionPort {
-  const StubExpressionPort();
-
-  @override
-  String format(String template, Map<String, dynamic> variables) {
-    return template;
-  }
-
-  @override
-  bool validate(String template) {
-    return true;
   }
 }

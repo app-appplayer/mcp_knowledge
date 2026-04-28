@@ -1,131 +1,126 @@
-/// Profile Facade - Simplified API for profile operations.
+/// Profile Facade — thin wrapper around `ProfileRuntime` (mcp_profile).
+///
+/// REDESIGN-PLAN Phase 8 §3.5 / §4 step 6: this facade no longer fakes
+/// profile application by formatting templates inline. It delegates to
+/// a real `ProfileRuntime` so the 3-pillar pipeline (Appraisal → Decision
+/// → Expression) actually runs.
 library;
 
-/// Profile information.
-class ProfileInfo {
-  /// Profile ID.
-  final String profileId;
+import 'package:mcp_profile/mcp_profile.dart' as profile;
 
-  /// Profile name.
-  final String name;
+import '../system/knowledge_system.dart';
+import '../events/knowledge_event.dart';
 
-  /// Description.
-  final String? description;
+// Re-export ProfileRuntime + context types so consumers can build
+// RuntimeProfileContext without importing mcp_profile directly.
+export 'package:mcp_profile/mcp_profile.dart'
+    show
+        Profile,
+        ProfileRegistry,
+        ProfileRuntime,
+        ProfileApplicationResult,
+        ProfileApplicationMetadata,
+        RuntimeProfileContext,
+        DefaultRuntimeContext,
+        RuntimeContextBuilder,
+        ProfileNotFoundException,
+        EnginePorts;
 
-  /// Tags.
-  final List<String> tags;
-
-  const ProfileInfo({
-    required this.profileId,
-    required this.name,
-    this.description,
-    this.tags = const [],
-  });
-}
-
-/// Profile selection result.
-class ProfileSelectionResult {
-  /// Selected profile ID.
-  final String? selectedId;
-
-  /// Selection confidence.
-  final double confidence;
-
-  /// Reason for selection.
-  final String? reason;
-
-  /// Alternative profiles.
-  final List<String> alternatives;
-
-  const ProfileSelectionResult({
-    this.selectedId,
-    required this.confidence,
-    this.reason,
-    this.alternatives = const [],
-  });
-
-  /// Whether a profile was selected.
-  bool get hasSelection => selectedId != null;
-}
-
-/// Simplified API for profile operations.
+/// Thin facade over [profile.ProfileRuntime].
 class ProfileFacade {
-  final dynamic _system;
+  final KnowledgeSystem _system;
 
-  /// Create facade with system reference.
-  ProfileFacade({required dynamic system}) : _system = system;
+  ProfileFacade({required KnowledgeSystem system}) : _system = system;
 
-  /// Render system prompt with entity context.
-  /// Throws exception on failure.
-  Future<String> getSystemPrompt(
-    String profileId, {
-    required String entityId,
-    Map<String, dynamic>? additionalContext,
-  }) async {
-    final result = await render(
-      profileId,
-      entityId: entityId,
-      additionalContext: additionalContext,
-    );
-    if (!result.success) {
-      throw ProfileException(result.error ?? 'Unknown error');
+  /// Access the orchestrator.
+  KnowledgeSystem get system => _system;
+
+  /// Whether a profile runtime is wired.
+  bool get isAvailable => _system.profileRuntime != null;
+
+  profile.ProfileRuntime get _runtime {
+    final rt = _system.profileRuntime;
+    if (rt == null) {
+      throw StateError(
+        'ProfileRuntime not configured — pass `profileRuntime: ...` to '
+        'KnowledgeSystem to enable profile evaluation.',
+      );
     }
-    return result.content!;
+    return rt;
   }
 
-  /// Render profile with full options and result.
-  Future<ProfileResult> render(
+  // ── Apply ────────────────────────────────────────────────────────────────
+
+  /// Run the full appraisal → decision → expression pipeline.
+  ///
+  /// Builds a [profile.RuntimeProfileContext] from the supplied
+  /// parameters and dispatches to `ProfileRuntime.apply()`. Optional
+  /// `rawContent` triggers the Expression formatting step.
+  Future<profile.ProfileApplicationResult> apply(
     String profileId, {
     required String entityId,
-    Map<String, dynamic>? additionalContext,
+    Map<String, dynamic>? inputs,
+    Map<String, dynamic>? metadata,
+    String? rawContent,
   }) async {
-    // Implementation will use _system.profiles
-    throw UnimplementedError('ProfileFacade.render not implemented');
+    final ports = _system.ports;
+    final context = profile.DefaultRuntimeContext(
+      profileId: profileId,
+      entityId: entityId,
+      inputs: inputs ?? const {},
+      metadata: metadata ?? const {},
+      facts: ports.facts,
+      patterns: ports.patterns,
+      summaries: ports.summaries,
+      llm: ports.llm,
+    );
+
+    final result = await _runtime.apply(context, rawContent: rawContent);
+
+    _system.eventBus.emit(ProfileAppliedEvent(
+      profileId: profileId,
+      entityId: entityId,
+      duration: result.metadata.duration,
+      decision: result.decision.action,
+      timestamp: DateTime.now(),
+    ));
+
+    return result;
   }
 
-  /// List available profiles.
-  Future<List<ProfileInfo>> list({
-    String? tag,
-    String? category,
+  /// Apply a profile and return only the appraisal portion.
+  Future<profile.ProfileApplicationResult> appraise(
+    String profileId, {
+    required String entityId,
   }) async {
-    // Implementation will use _system.profiles
-    throw UnimplementedError('ProfileFacade.list not implemented');
+    return apply(profileId, entityId: entityId);
   }
 
-  /// Select best profile for context.
-  Future<ProfileSelectionResult> select(
-    List<String> candidateIds, {
-    required Map<String, dynamic> context,
-    String? preferredId,
-  }) async {
-    // Implementation will use _system.profiles
-    throw UnimplementedError('ProfileFacade.select not implemented');
+  // ── Registry passthrough (mcp_profile.ProfileRegistry) ───────────────────
+
+  /// Register a profile against the underlying [profile.ProfileRegistry].
+  void register(profile.Profile p) {
+    _runtime.registry.register(p);
   }
+
+  /// Unregister a profile.
+  bool unregister(String profileId) {
+    return _runtime.registry.unregister(profileId);
+  }
+
+  /// Get a profile from the registry.
+  profile.Profile? get(String profileId) {
+    return _runtime.registry.get(profileId);
+  }
+
+  /// List all registered profiles.
+  List<profile.Profile> list() {
+    return _runtime.registry.all;
+  }
+
 }
 
-/// Profile render result.
-class ProfileResult {
-  /// Whether render succeeded.
-  final bool success;
-
-  /// Rendered content.
-  final String? content;
-
-  /// Error message.
-  final String? error;
-
-  /// Duration.
-  final Duration duration;
-
-  const ProfileResult({
-    required this.success,
-    this.content,
-    this.error,
-    required this.duration,
-  });
-}
-
-/// Profile exception.
+/// Profile exception raised by the facade.
 class ProfileException implements Exception {
   final String message;
   ProfileException(this.message);

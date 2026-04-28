@@ -32,6 +32,9 @@ class KnowledgeConfig {
   /// Feature flags.
   final FeatureFlags features;
 
+  /// Philosophy configuration.
+  final PhilosophyConfig philosophy;
+
   const KnowledgeConfig({
     this.workspaceId = 'default',
     this.factGraph = const FactGraphConfig(),
@@ -42,6 +45,7 @@ class KnowledgeConfig {
     this.events = const EventConfig(),
     this.logging = const LoggingConfig(),
     this.features = const FeatureFlags(),
+    this.philosophy = const PhilosophyConfig(),
   });
 
   /// Default configuration.
@@ -51,13 +55,21 @@ class KnowledgeConfig {
   static const KnowledgeConfig development = KnowledgeConfig(
     logging: LoggingConfig(level: LogLevel.debug),
     features: FeatureFlags(enableExperimentalPatternMining: true),
+    philosophy: PhilosophyConfig(
+      enableEvolution: true,
+      minConfidenceThreshold: 0.3,
+    ),
   );
 
   /// Production configuration.
   static const KnowledgeConfig production = KnowledgeConfig(
     events: EventConfig(persistEvents: true),
     pipeline: PipelineConfig(checkpointEnabled: true),
-    logging: LoggingConfig(level: LogLevel.warning),
+    logging: LoggingConfig(level: LogLevel.warning, enableAuditLog: true),
+    philosophy: PhilosophyConfig(
+      enableDuringGeneration: false,
+      minConfidenceThreshold: 0.7,
+    ),
   );
 
   /// Create copy with modifications.
@@ -71,6 +83,7 @@ class KnowledgeConfig {
     EventConfig? events,
     LoggingConfig? logging,
     FeatureFlags? features,
+    PhilosophyConfig? philosophy,
   }) {
     return KnowledgeConfig(
       workspaceId: workspaceId ?? this.workspaceId,
@@ -82,6 +95,7 @@ class KnowledgeConfig {
       events: events ?? this.events,
       logging: logging ?? this.logging,
       features: features ?? this.features,
+      philosophy: philosophy ?? this.philosophy,
     );
   }
 }
@@ -119,10 +133,61 @@ class SkillConfig {
   /// Record claims by default.
   final bool recordClaimsByDefault;
 
+  /// Default execution budget (null uses skill defaults).
+  final ExecutionBudgetConfig? defaultBudget;
+
   const SkillConfig({
     this.defaultTimeout = const Duration(minutes: 5),
     this.maxConcurrentExecutions = 10,
     this.recordClaimsByDefault = true,
+    this.defaultBudget,
+  });
+
+  /// Create a copy with modifications.
+  SkillConfig copyWith({
+    Duration? defaultTimeout,
+    int? maxConcurrentExecutions,
+    bool? recordClaimsByDefault,
+    ExecutionBudgetConfig? defaultBudget,
+  }) {
+    return SkillConfig(
+      defaultTimeout: defaultTimeout ?? this.defaultTimeout,
+      maxConcurrentExecutions:
+          maxConcurrentExecutions ?? this.maxConcurrentExecutions,
+      recordClaimsByDefault:
+          recordClaimsByDefault ?? this.recordClaimsByDefault,
+      defaultBudget: defaultBudget ?? this.defaultBudget,
+    );
+  }
+}
+
+/// Execution budget configuration (mirrors mcp_skill ExecutionBudget).
+class ExecutionBudgetConfig {
+  /// Maximum tokens.
+  final int maxTokens;
+
+  /// Maximum duration.
+  final Duration maxDuration;
+
+  /// Maximum steps.
+  final int maxSteps;
+
+  /// Maximum LLM calls.
+  final int maxLlmCalls;
+
+  /// Maximum MCP calls.
+  final int maxMcpCalls;
+
+  /// Maximum concurrency.
+  final int maxConcurrency;
+
+  const ExecutionBudgetConfig({
+    this.maxTokens = 100000,
+    this.maxDuration = const Duration(minutes: 5),
+    this.maxSteps = 50,
+    this.maxLlmCalls = 20,
+    this.maxMcpCalls = 100,
+    this.maxConcurrency = 5,
   });
 }
 
@@ -137,10 +202,14 @@ class ProfileConfig {
   /// Maximum content length.
   final int maxContentLength;
 
+  /// Conflict resolution strategy for multi-profile scenarios.
+  final String conflictResolution;
+
   const ProfileConfig({
     this.enableAppraisalByDefault = true,
     this.appraisalThreshold = 70.0,
     this.maxContentLength = 100000,
+    this.conflictResolution = 'merge',
   });
 }
 
@@ -155,10 +224,14 @@ class PipelineConfig {
   /// Maximum retries.
   final int maxRetries;
 
+  /// Maximum concurrent pipeline stages.
+  final int maxConcurrency;
+
   const PipelineConfig({
     this.checkpointEnabled = false,
-    this.checkpointInterval = const Duration(minutes: 5),
+    this.checkpointInterval = const Duration(seconds: 30),
     this.maxRetries = 3,
+    this.maxConcurrency = 4,
   });
 }
 
@@ -239,5 +312,43 @@ class FeatureFlags {
     this.enableAutoSummarization = true,
     this.enableAutoConfirm = false,
     this.enableHotReload = false,
+  });
+}
+
+/// Philosophy configuration.
+class PhilosophyConfig {
+  /// Whether philosophy evaluation is enabled.
+  final bool enabled;
+
+  /// Enable pre-generation intervention.
+  final bool enablePreGeneration;
+
+  /// Enable during-generation intervention.
+  final bool enableDuringGeneration;
+
+  /// Enable post-generation intervention.
+  final bool enablePostGeneration;
+
+  /// Enable tension detection.
+  final bool enableTensionDetection;
+
+  /// Enable evolution proposals.
+  final bool enableEvolution;
+
+  /// Minimum confidence threshold for philosophy guidance to be applied.
+  final double minConfidenceThreshold;
+
+  /// Conflict resolution strategy.
+  final String conflictStrategy;
+
+  const PhilosophyConfig({
+    this.enabled = true,
+    this.enablePreGeneration = true,
+    this.enableDuringGeneration = true,
+    this.enablePostGeneration = true,
+    this.enableTensionDetection = true,
+    this.enableEvolution = false,
+    this.minConfidenceThreshold = 0.5,
+    this.conflictStrategy = 'priority',
   });
 }

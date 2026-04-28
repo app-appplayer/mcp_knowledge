@@ -28,10 +28,28 @@ class KnowledgeEventBus {
   }
 
   /// Subscribe with handler.
+  ///
+  /// Subscriber exceptions are deliberately isolated from emitters and other
+  /// subscribers: handler throws are swallowed here, and stream-level errors
+  /// (which should not occur for a broadcast sink but are guarded as a
+  /// safeguard) are also suppressed. Callers that need custom error handling
+  /// should use [on] and wire their own `listen` with `onError`.
   StreamSubscription<T> subscribe<T extends KnowledgeEvent>(
-    void Function(T) handler,
+    void Function(T event) handler,
   ) {
-    return on<T>().listen(handler);
+    return on<T>().listen(
+      (event) {
+        try {
+          handler(event);
+        } catch (_) {
+          // Subscriber exceptions are deliberately isolated from emitters.
+        }
+      },
+      onError: (Object error, StackTrace stack) {
+        // Stream-level errors (should not occur for broadcast sinks but
+        // safeguarded here) are also isolated.
+      },
+    );
   }
 
   /// Close the event bus.

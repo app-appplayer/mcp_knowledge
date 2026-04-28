@@ -1,36 +1,82 @@
-/// Knowledge System - Core unified system class.
+/// Knowledge System — the knowledge-domain complete core.
 ///
-/// Provides single entry point for all knowledge operations.
+/// `KnowledgeSystem` is the **single entry point** for the knowledge stack.
+/// It composes the five domain runtimes:
+///
+///   - `FactGraphRuntime` (mcp_fact_graph) — L0, required
+///   - `SkillRuntime` (mcp_skill) — L1, opt-in
+///   - `ProfileRuntime` (mcp_profile) — L2, opt-in
+///   - `PhilosophyEngine` (mcp_philosophy) — L3, opt-in
+///   - `OpsRuntime` (mcp_knowledge_ops) — opt-in
+///
+/// L0 FactGraph is a required layer. When the caller does not supply a
+/// `FactGraphRuntime`, a default `FactGraphRuntime.inMemory()` is auto-
+/// wired so the knowledge-accumulation cycle (evidence → candidates →
+/// facts → queries) works with zero external adapters.
+///
+/// L1~L3 and Ops are opt-in. Their facades throw `StateError` when the
+/// runtime is not activated. Infrastructure capabilities (LLM, KV,
+/// MCP, Retrieval, Notification, Event, Metric) are injected via the
+/// ports container; all other ports are core-internal.
 library;
+
+import 'package:mcp_fact_graph/mcp_fact_graph.dart' show FactGraphRuntime;
+import 'package:mcp_philosophy/mcp_philosophy.dart' show PhilosophyEngine;
 
 import 'knowledge_config.dart';
 import 'knowledge_ports.dart';
+import '../events/event_bus.dart';
+import '../events/knowledge_event.dart';
 import '../facade/fact_facade.dart';
 import '../facade/skill_facade.dart';
 import '../facade/profile_facade.dart';
-import '../facade/bundle_facade.dart';
-import '../bridge/skill_fact_bridge.dart';
-import '../bridge/profile_fact_bridge.dart';
-import '../bridge/bundle_system_bridge.dart';
-import '../events/event_bus.dart';
+import '../facade/philosophy_facade.dart';
+import '../facade/ops_facade.dart';
 
-/// Unified knowledge management system.
+/// Unified knowledge management orchestrator.
 ///
-/// Integrates all knowledge subsystems and provides a single entry point
-/// for knowledge operations.
+/// Composes the five domain runtimes and exposes them through thin
+/// facades. The runtimes themselves are constructed and wired by the host
+/// — `KnowledgeSystem` only orchestrates them.
 class KnowledgeSystem {
   /// System configuration.
   final KnowledgeConfig config;
 
-  /// External dependency ports.
+  /// Standard-port container — the host-supplied capabilities consumed
+  /// across the orchestrator. May be empty when every runtime injected
+  /// already carries its own ports.
   final KnowledgePorts ports;
 
-  /// Event bus for cross-component communication.
+  /// Event bus for cross-component observability events.
   final KnowledgeEventBus eventBus;
 
-  // === Facades ===
+  // ── Optional runtimes (scenario H — partial orchestration) ──────────────
 
-  /// Simplified fact operations.
+  /// Fact graph runtime (mcp_fact_graph). L0 is a required layer — when
+  /// the constructor parameter is null, a default
+  /// `FactGraphRuntime.inMemory()` is auto-wired so the system works
+  /// with zero external adapters.
+  final FactGraphRuntime factGraph;
+
+  /// Skill runtime (mcp_skill). Null when skill execution is not in scope.
+  final SkillRuntime? skillRuntime;
+
+  /// Profile runtime (mcp_profile). Null when profile evaluation is not
+  /// in scope.
+  final ProfileRuntime? profileRuntime;
+
+  /// Philosophy engine (mcp_philosophy). Null when philosophy evaluation
+  /// is not in scope. When provided, the engine is also exposed through
+  /// `ports.philosophy` so other components can consume it.
+  final PhilosophyEngine? philosophyEngine;
+
+  /// Ops runtime (mcp_knowledge_ops). Null when workflow/pipeline
+  /// orchestration is not in scope.
+  final OpsRuntime? opsRuntime;
+
+  // ── Facades ──────────────────────────────────────────────────────────────
+
+  /// Simplified fact graph operations.
   late final FactFacade facts;
 
   /// Simplified skill operations.
@@ -39,130 +85,86 @@ class KnowledgeSystem {
   /// Simplified profile operations.
   late final ProfileFacade profile;
 
-  /// Simplified bundle operations.
-  late final BundleFacade bundle;
+  /// Simplified philosophy operations.
+  late final PhilosophyFacade philosophy;
 
-  // === Bridges (internal) ===
-
-  late final SkillFactBridge _skillFactBridge;
-  late final ProfileFactBridge _profileFactBridge;
-  late final BundleSystemBridge _bundleSystemBridge;
+  /// Simplified ops (workflow / pipeline / runbook) operations.
+  late final OpsFacade ops;
 
   /// Create a new knowledge system.
+  ///
+  /// L0 FactGraph is required. When `factGraph` is null, a default
+  /// `FactGraphRuntime.inMemory()` is auto-wired so the system works
+  /// with zero external adapters out of the box.
+  ///
+  /// L1 Skill / L2 Profile / L3 Philosophy / Ops are opt-in. Pass only
+  /// the runtimes for layers in scope. Inactive layer facades will throw
+  /// `StateError` when invoked.
   KnowledgeSystem({
     required this.config,
-    required this.ports,
+    KnowledgePorts? ports,
+    FactGraphRuntime? factGraph,
+    this.skillRuntime,
+    this.profileRuntime,
+    this.philosophyEngine,
+    this.opsRuntime,
     KnowledgeEventBus? eventBus,
-  }) : eventBus = eventBus ?? KnowledgeEventBus() {
+  })  : ports = ports ?? const KnowledgePorts(),
+        factGraph = factGraph ?? FactGraphRuntime.inMemory(
+          defaultWorkspaceId: config.workspaceId,
+        ),
+        eventBus = eventBus ?? KnowledgeEventBus() {
     _initialize();
   }
 
-  /// Create system with default configuration.
+  /// Default-config shorthand factory. L0 FactGraph is auto-wired.
   factory KnowledgeSystem.defaults({
-    required KnowledgePorts ports,
+    KnowledgePorts? ports,
+    FactGraphRuntime? factGraph,
+    SkillRuntime? skillRuntime,
+    ProfileRuntime? profileRuntime,
+    PhilosophyEngine? philosophyEngine,
+    OpsRuntime? opsRuntime,
   }) {
     return KnowledgeSystem(
       config: KnowledgeConfig.defaults,
       ports: ports,
+      factGraph: factGraph,
+      skillRuntime: skillRuntime,
+      profileRuntime: profileRuntime,
+      philosophyEngine: philosophyEngine,
+      opsRuntime: opsRuntime,
+    );
+  }
+
+  /// Zero-config factory for tests and quick-starts. Auto-wires
+  /// L0 `FactGraphRuntime.inMemory()` and `KnowledgePorts.stub()`
+  /// (which provides `InMemoryKvStoragePort` and `InMemoryEventPort`).
+  /// The L0 FactGraph cycle (evidence → candidates → facts → queries)
+  /// works immediately without external adapters. L1~L3+Ops runtimes
+  /// remain null; their facades throw `StateError` when invoked.
+  factory KnowledgeSystem.stub() {
+    return KnowledgeSystem(
+      config: KnowledgeConfig.defaults,
+      ports: KnowledgePorts.stub(),
     );
   }
 
   void _initialize() {
-    // Initialize bridges (placeholder)
-    _skillFactBridge = SkillFactBridge(
-      skillRuntime: null,
-      factGraph: null,
-    );
-    _profileFactBridge = ProfileFactBridge(
-      profileRuntime: null,
-      factGraph: null,
-    );
-    _bundleSystemBridge = BundleSystemBridge(system: this);
-
-    // Initialize facades
     facts = FactFacade(system: this);
     skill = SkillFacade(system: this);
     profile = ProfileFacade(system: this);
-    bundle = BundleFacade(system: this);
+    philosophy = PhilosophyFacade(system: this);
+    ops = OpsFacade(system: this);
   }
 
-  /// Load and deploy a bundle.
-  Future<BundleLoadResult> loadBundle(dynamic bundleData) async {
-    // Implementation will use _bundleSystemBridge
-    throw UnimplementedError('KnowledgeSystem.loadBundle not implemented');
-  }
-
-  /// Execute skill with optional claim recording.
-  Future<dynamic> executeSkill(
-    String skillId,
-    Map<String, dynamic> inputs, {
-    bool recordClaims = true,
-    String? entityId,
-  }) async {
-    // Implementation will use skill facade and bridge
-    throw UnimplementedError('KnowledgeSystem.executeSkill not implemented');
-  }
-
-  /// Render profile with entity context.
-  Future<dynamic> renderProfile(
-    String profileId, {
-    required String entityId,
-    Map<String, dynamic>? additionalContext,
-  }) async {
-    // Implementation will use profile facade and bridge
-    throw UnimplementedError('KnowledgeSystem.renderProfile not implemented');
-  }
-
-  /// Run curation pipeline.
-  Future<dynamic> runCuration({dynamic input}) async {
-    throw UnimplementedError('KnowledgeSystem.runCuration not implemented');
-  }
-
-  /// Run summarization pipeline.
-  Future<dynamic> runSummarization({dynamic input}) async {
-    throw UnimplementedError(
-        'KnowledgeSystem.runSummarization not implemented');
-  }
-
-  /// Run pattern mining pipeline.
-  Future<dynamic> runPatternMining({dynamic input}) async {
-    throw UnimplementedError(
-        'KnowledgeSystem.runPatternMining not implemented');
-  }
-
-  /// Gracefully shutdown the system.
+  /// Gracefully shutdown the system. Closes the L0 FactGraph runtime,
+  /// emits `SystemShutdownEvent`, and closes the event bus. Host-owned
+  /// opt-in runtimes (skill / profile / philosophy / ops) and external
+  /// infrastructure adapters must be cleaned up by the host.
   Future<void> shutdown() async {
+    await factGraph.close();
+    eventBus.emit(SystemShutdownEvent(timestamp: DateTime.now()));
     await eventBus.close();
   }
-
-  // Suppress unused field warnings for design phase
-  SkillFactBridge get skillFactBridge => _skillFactBridge;
-  ProfileFactBridge get profileFactBridge => _profileFactBridge;
-  BundleSystemBridge get bundleSystemBridge => _bundleSystemBridge;
-}
-
-/// Result of loading a bundle.
-class BundleLoadResult {
-  /// Bundle ID.
-  final String bundleId;
-
-  /// Number of skills loaded.
-  final int skillsLoaded;
-
-  /// Number of profiles loaded.
-  final int profilesLoaded;
-
-  /// Number of knowledge items loaded.
-  final int knowledgeItemsLoaded;
-
-  /// Warnings during loading.
-  final List<String> warnings;
-
-  const BundleLoadResult({
-    required this.bundleId,
-    required this.skillsLoaded,
-    required this.profilesLoaded,
-    required this.knowledgeItemsLoaded,
-    this.warnings = const [],
-  });
 }

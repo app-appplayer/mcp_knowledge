@@ -1,3 +1,23 @@
+## [0.2.0] - 2026-04-28 - Orchestrator-Only Redesign
+
+### Changed (breaking)
+- `mcp_knowledge` is now **orchestrator-only** — no port definitions or wrappers; composes runtimes from `mcp_fact_graph` / `mcp_skill` / `mcp_profile` / `mcp_philosophy` / `mcp_knowledge_ops`.
+- `KnowledgeSystem` constructor accepts five optional runtimes (`factGraph`, `skillRuntime`, `profileRuntime`, `philosophyEngine`, `opsRuntime`). Partial orchestration supported via `null`.
+- `KnowledgePorts` is a flat 32-field container of `mcp_bundle` standard ports (legacy `CollectionStoragePort` removed).
+- Facade methods (`SkillFacade.execute`, `ProfileFacade.apply`, `FactFacade`, `PhilosophyFacade`) delegate to real runtimes; 0.1.0 stand-ins are gone.
+- New dependency: `mcp_bundle ^0.3.0`.
+
+### Added
+- `OpsFacade` wrapping `OpsRuntime`'s workflow / pipeline / runbook ports (replaces `BundleFacade`).
+- `KnowledgeSystem.stub()` convenience factory.
+
+### Removed
+- Six bridges (`skill_fact`, `profile_fact`, `bundle_system`, `philosophy_skill/profile/fact`) and five raw-accessor adapters — replaced by Contract Layer port wiring inside the runtimes.
+- `BundleFacade` — bundle deployment is now an `OpsRuntime` workflow concern.
+- `KnowledgeSystem.runCuration / runSummarization / runPatternMining / loadBundle / executeSkill / applyProfile / executePipeline / executeWorkflow / resumeFromCheckpoint` — delegated to `system.ops.*` / `system.skill.*` / `system.profile.*`.
+
+---
+
 ## [0.1.0] - Initial Release
 
 ### Added
