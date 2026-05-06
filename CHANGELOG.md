@@ -1,3 +1,17 @@
+## [0.2.1] - 2026-05-04 - Multi-ethos resolution & graceful profile listing
+
+### Added
+- `PhilosophyFacade.getEthosById(String? id)` — id-based ethos resolution against the wired `EthosStorePort` with a graceful fallback to the active ethos. Multi-ethos workspaces (e.g. `ads-core` vs `editorial-core`) can now fork from a specific ethos id without bypassing the facade.
+
+### Changed
+- `ProfileFacade.list()` returns an empty list when no `ProfileRuntime` is wired instead of raising `StateError`. Mutating operations (`register`, `unregister`, `get`, `apply`) still raise `StateError`. Read-only enumeration is now safe to call unconditionally.
+
+### Dependencies
+- `mcp_bundle: ^0.3.1` — for `EthosRecord.fromJson` used by `getEthosById` to reconstruct ethos payloads round-tripped through persistent stores.
+- `mcp_fact_graph: ^0.2.1` — propagates the upstream `ConsistencyChecker._periodsOverlap` bug fix (calendar-day → microsecond precision) so consumers that pin `mcp_knowledge` exactly receive the fix transitively.
+
+---
+
 ## [0.2.0] - 2026-04-28 - Orchestrator-Only Redesign
 
 ### Changed (breaking)

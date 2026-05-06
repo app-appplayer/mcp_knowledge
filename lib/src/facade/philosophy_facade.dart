@@ -156,6 +156,39 @@ class PhilosophyFacade {
     }
   }
 
+  /// Retrieve an Ethos by id from the wired [EthosStorePort], with a
+  /// graceful fallback to the active ethos.
+  ///
+  /// Resolution order:
+  ///   1. `KnowledgePorts.ethosStore.getEthos(id)` → reconstruct via
+  ///      `Ethos.fromJson(record.payload)` when the record exists and
+  ///      its payload deserializes cleanly.
+  ///   2. Active ethos via [getEthos] (covers `id == null`, store
+  ///      unwired, record missing, or payload schema mismatch).
+  ///
+  /// Multi-ethos workspaces (e.g. `ads-core` vs `editorial-core`) wire
+  /// a real [EthosStorePort] and pass the id at the call site to fork
+  /// from a specific ethos. Single-ethos workspaces just call
+  /// [getEthos] (same return type, no id needed).
+  Future<Ethos> getEthosById(String? id) async {
+    if (id != null && id.isNotEmpty) {
+      final store = _system.ports.ethosStore;
+      if (store != null) {
+        try {
+          final record = await store.getEthos(id);
+          if (record != null) {
+            return Ethos.fromJson(Map<String, dynamic>.from(record.payload));
+          }
+        } catch (_) {
+          // Store throw or payload schema mismatch — fall through to
+          // the active-ethos fallback so callers get a stable Ethos
+          // regardless of store health.
+        }
+      }
+    }
+    return getEthos();
+  }
+
   /// Detect tensions between Philosophy and other layers.
   Future<List<Tension>> detectTensions(MultiLayerContext context) async {
     if (!_config.enableTensionDetection) {

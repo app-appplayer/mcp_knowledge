@@ -83,4 +83,28 @@ void main() {
       expect(system.profile.get('p-new'), isNull);
     });
   });
+
+  group('ProfileFacade without ProfileRuntime — graceful list', () {
+    test('list() returns empty list when profileRuntime is null', () {
+      final system = KnowledgeSystem(
+        config: KnowledgeConfig.defaults,
+        // profileRuntime intentionally not wired
+      );
+      expect(system.profile.isAvailable, isFalse);
+      // list() must not throw — returns const [] so multi-pool UI pickers
+      // can call it unconditionally.
+      expect(system.profile.list(), isEmpty);
+    });
+
+    test('apply still throws StateError when profileRuntime is null',
+        () async {
+      final system = KnowledgeSystem(
+        config: KnowledgeConfig.defaults,
+      );
+      expect(
+        () => system.profile.apply('p-test', entityId: 'e1'),
+        throwsStateError,
+      );
+    });
+  });
 }

@@ -114,8 +114,19 @@ class ProfileFacade {
   }
 
   /// List all registered profiles.
+  ///
+  /// Returns an empty list when no `ProfileRuntime` is wired — listing
+  /// is a read-only enumeration that integrates poorly with a hard
+  /// `StateError`. Callers driving multi-pool UI pickers (e.g. agent
+  /// fork starters) can call `list()` unconditionally and treat the
+  /// empty result as "no pool starters" without first probing
+  /// [isAvailable]. Mutating operations (`register`, `unregister`,
+  /// `get`, `apply`) still raise `StateError` when the runtime is not
+  /// wired since the partial state would silently lose data.
   List<profile.Profile> list() {
-    return _runtime.registry.all;
+    final rt = _system.profileRuntime;
+    if (rt == null) return const [];
+    return rt.registry.all;
   }
 
 }
