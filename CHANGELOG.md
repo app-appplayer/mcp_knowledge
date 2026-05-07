@@ -1,3 +1,10 @@
+## [0.2.2] - 2026-05-07 - Cascade `mcp_bundle ^0.3.2`
+
+### Dependencies
+- `mcp_bundle: ^0.3.1` → `^0.3.2` — cascade alignment to pick up the new `McpBundle.factGraphSection` wire (additive — fact instance round-trip slot alongside the existing `factGraphSchema` type catalogue). No code changes in `mcp_knowledge` itself; downstream consumers that round-trip bundles with embedded fact instance data through `mcp_knowledge`'s facades / bridges now resolve against the new wire.
+
+---
+
 ## [0.2.1] - 2026-05-04 - Multi-ethos resolution & graceful profile listing
 
 ### Added
