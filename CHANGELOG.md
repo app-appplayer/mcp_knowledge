@@ -1,3 +1,15 @@
+## [0.2.3] - 2026-05-23 - mcp_bundle 0.4.0 + sibling cascade
+
+### Changed (cascade)
+- `mcp_bundle` `^0.3.2` → `^0.4.0` (UiSection.pages spec realignment, see mcp_bundle 0.4.0).
+- `mcp_fact_graph` `^0.2.1` → `^0.2.2`.
+- `mcp_skill` `^0.2.0` → `^0.2.1`.
+- `mcp_profile` `^0.2.0` → `^0.2.1`.
+- `mcp_philosophy` `^0.1.0` → `^0.1.1`.
+- `mcp_knowledge_ops` `^0.2.0` → `^0.2.1`.
+
+mcp_knowledge does not touch `UiSection.pages` directly — caret-only cascade. Consumers should bump to `^0.2.3`.
+
 ## [0.2.2] - 2026-05-07 - Cascade `mcp_bundle ^0.3.2`
 
 ### Dependencies
