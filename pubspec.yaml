@@ -1,6 +1,6 @@
 name: mcp_knowledge
 description: Unified knowledge management system integrating facts, skills, profiles, and operations with facades, bridges, and event-driven architecture for the MCP ecosystem.
-version: 0.2.3
+version: 0.2.4
 homepage: https://app-appplayer.github.io/makemind
 repository: https://github.com/app-appplayer/mcp_knowledge
 issue_tracker: https://github.com/app-appplayer/mcp_knowledge/issues
@@ -21,7 +21,7 @@ dependencies:
   mcp_fact_graph: ^0.2.2
   mcp_skill: ^0.2.1
   mcp_profile: ^0.2.1
-  mcp_knowledge_ops: ^0.2.1
+  mcp_knowledge_ops: ^0.2.2
   mcp_philosophy: ^0.1.1
 
 dev_dependencies:

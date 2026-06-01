@@ -1,3 +1,14 @@
+## [0.2.4] - 2026-05-30 - OpsFacade behavior execution (additive)
+
+### Added
+- `OpsFacade.runBehavior(id, {runId, input})` / `resumeBehavior(id, runId, {statePatch})` / `listBehaviors()` — execute / resume / list behavior definitions registered in `OpsRuntime.behaviorRegistry` (the unified "behavior definition" engine). Returns a plain `Map<String, dynamic>` (`runId` · `status` · optional `waitingStepId` / `error`) so callers need no mcp_knowledge_ops types. `resumeBehavior` merges the optional `statePatch` into the run state before re-evaluating the waiting guard (the approval/unblock path). Keeps behavior execution on the facade layer alongside `runWorkflow` / `runRunbook`, so kernels and tools route through `system.ops.runBehavior` instead of reaching into `mcp_knowledge_ops` directly.
+
+### Changed (dependency floor)
+- `mcp_knowledge_ops` `^0.2.1` → `^0.2.2` — the behavior engine (`BehaviorRunnable` · `OpsRuntime.behaviorRegistry` · `EngineResult`) lives in 0.2.2; the floor is raised so those symbols are guaranteed, not merely resolved.
+
+### Backward compatibility
+- Additive only. No existing API or behavior changed.
+
 ## [0.2.3] - 2026-05-23 - mcp_bundle 0.4.0 + sibling cascade
 
 ### Changed (cascade)
