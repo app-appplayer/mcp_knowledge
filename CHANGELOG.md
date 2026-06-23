@@ -1,3 +1,10 @@
+## [0.2.5] - 2026-06-23 - prohibition-enforcement floor guarantee (dependency-only)
+
+### Changed (dependency floor)
+- `mcp_philosophy` `^0.1.1` → `^0.1.2` — **guarantees** the deterministic prohibition enforcement (`Prohibition.forbiddenPatterns`, mcp_philosophy 0.1.2) is present in the wired `PhilosophyEngine`, rather than relying on caret-resolves-to-latest. mcp_knowledge owns the `mcp_philosophy` dependency that brings the engine into consumers' graphs (flowbrain_core etc.), so the floor belongs here. Without it a consumer could resolve mcp_philosophy 0.1.1 and the `bk.philosophy.check` / work-time §3 gate would silently fall open for any prohibition outside the two built-in heuristics.
+- `mcp_bundle` `^0.4.0` → `^0.4.4` — internal-dep latest (0.4.4 carries `Prohibition.forbiddenPatterns` + Ethos `fromJson` field-named validation).
+- No code change — floor-only release.
+
 ## [0.2.4] - 2026-05-30 - OpsFacade behavior execution (additive)
 
 ### Added
