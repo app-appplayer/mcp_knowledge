@@ -1,3 +1,12 @@
+## [0.2.6] - 2026-10-31 - mcp_skill 0.3.0 floor and procedureId on the skill facade
+
+### Added
+- `SkillFacade.execute(..., procedureId:)`: names the procedure of the skill to run (optional; without it the first runs, as before). It is passed to the `SkillContext`, so the event path of the facade is kept. Needs `mcp_skill` 0.3.0.
+
+### Changed (dependency floor)
+- `mcp_skill` `^0.2.1` -> `^0.3.0`. This is the reason for the release: `^0.2.x` cannot reach `mcp_skill` 0.3.0 (tool errors fail a step, conditions are evaluated, `branch` / `loop` / `output` steps), so a host that takes this package would otherwise be held on the old skill runtime.
+- Internal floors raised to the current latest: `mcp_bundle` `^0.4.12`, `mcp_fact_graph` `^0.2.4`, `mcp_knowledge_ops` `^0.3.0`, `mcp_philosophy` `^0.1.4`.
+
 ## [0.2.5] - 2026-06-23 - prohibition-enforcement floor guarantee (dependency-only)
 
 ### Changed (dependency floor)

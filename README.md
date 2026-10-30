@@ -5,7 +5,7 @@
 ## What `mcp_knowledge` provides
 
 - **`KnowledgeSystem`** — single entry point. Owns five facades and the event bus, carries the optional runtimes.
-- **`KnowledgePorts`** — flat container of 32 capability-named standard ports from `mcp_bundle`. Every field is optional.
+- **`KnowledgePorts`** — flat container of 33 capability-named standard ports from `mcp_bundle`. Every field is optional.
 - **`KnowledgeConfig`** — hierarchical immutable configuration with three presets (`defaults`, `development`, `production`).
 - **5 thin facades** — `FactFacade`, `SkillFacade`, `ProfileFacade`, `PhilosophyFacade`, `OpsFacade`.
 - **`KnowledgeEventBus`** + 13 typed event classes for reactive observability.
@@ -245,7 +245,7 @@ final config = KnowledgeConfig.defaults.copyWith(
 │  FactGraphRuntime │ SkillRuntime │ ProfileRuntime                    │
 │  PhilosophyEngine │ OpsRuntime                                       │
 ├──────────────────────────────────────────────────────────────────────┤
-│       KnowledgePorts — flat 32-field standard-port container         │
+│       KnowledgePorts — flat 33-field standard-port container         │
 │  facts/claims/entities/candidates/evidence/patterns/summaries/...    │
 │  skillRuntime/skillRegistry/mcp/llm                                  │
 │  metrics/appraisal/decision/expression/profileSummaries              │

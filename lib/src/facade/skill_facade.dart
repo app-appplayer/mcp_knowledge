@@ -60,7 +60,8 @@ class SkillFacade {
   /// Execute a skill and return the canonical [SkillResult].
   ///
   /// Builds a [skill.SkillContext] from the supplied parameters and runs
-  /// the full mcp_skill pipeline via `SkillRuntime.run()`.
+  /// the full mcp_skill pipeline via `SkillRuntime.run()`. [procedureId]
+  /// names the procedure of the skill to run; without it the first runs.
   Future<SkillResult> execute(
     String skillId,
     Map<String, dynamic> inputs, {
@@ -69,6 +70,7 @@ class SkillFacade {
     Period? period,
     skill.ExecutionBudget? budget,
     String? request,
+    String? procedureId,
   }) async {
     final runtime = _runtime;
     final startTime = DateTime.now();
@@ -80,6 +82,7 @@ class SkillFacade {
       period: period,
       budget: budget ?? _defaultBudget(),
       request: request,
+      procedureId: procedureId,
     );
 
     try {
@@ -210,6 +213,7 @@ class SkillFacade {
     Period? period,
     skill.ExecutionBudget? budget,
     String? request,
+    String? procedureId,
   }) {
     final now = DateTime.now();
     final id =
@@ -226,6 +230,7 @@ class SkillFacade {
       inputs: inputs,
       budget: budget,
       userId: entityId,
+      procedureId: procedureId,
     );
   }
 }

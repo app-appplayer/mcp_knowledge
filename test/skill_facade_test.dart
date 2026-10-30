@@ -6,6 +6,7 @@ library;
 
 import 'package:mcp_bundle/mcp_bundle.dart'
     show Claim, ClaimType, ExecutionMetadata;
+import 'package:mcp_bundle/mcp_bundle.dart' as mb;
 import 'package:mcp_knowledge/mcp_knowledge.dart';
 import 'package:mcp_skill/mcp_skill.dart' as skill;
 import 'package:test/test.dart';
@@ -111,6 +112,58 @@ void main() {
       expect(runtime.lastContext?.budget, isNotNull);
       expect(runtime.lastContext!.budget!.maxTokens, equals(1234));
       expect(runtime.lastContext!.budget!.maxSteps, equals(7));
+    });
+
+    test('procedureId reaches the SkillContext, and is null when not given',
+        () async {
+      final runtime = _CapturingSkillRuntime(
+        registry: MemorySkillRegistry(),
+        ports: SkillPorts(llm: StubLlmPort(), mcp: const StubMcpPort()),
+      );
+      final s = KnowledgeSystem(
+        config: KnowledgeConfig.defaults,
+        skillRuntime: runtime,
+      );
+      addTearDown(s.shutdown);
+
+      await s.skill.execute('x', const {}, procedureId: 'second');
+      expect(runtime.lastContext!.procedureId, 'second');
+      await s.skill.execute('x', const {});
+      expect(runtime.lastContext!.procedureId, isNull);
+    });
+
+    test('procedureId picks the procedure that runs', () async {
+      final registry = MemorySkillRegistry();
+      await registry.registerSkill(skill.skillBundleFromModule(mb.SkillModule(
+        id: 'm',
+        name: 'M',
+        procedures: [
+          for (final name in ['first', 'second'])
+            mb.SkillProcedure(id: name, name: name, steps: [
+              mb.ProcedureStep(
+                id: 'o',
+                action: mb.StepAction.fromJson(
+                    {'type': 'output', 'value': '"$name"'}),
+              ),
+            ]),
+        ],
+      )));
+      final s = KnowledgeSystem(
+        config: KnowledgeConfig.defaults,
+        skillRuntime: SkillRuntime(
+          registry: registry,
+          ports: SkillPorts(llm: StubLlmPort(), mcp: const StubMcpPort()),
+        ),
+      );
+      addTearDown(s.shutdown);
+
+      expect((await s.skill.execute('m', const {})).output, 'first');
+      expect(
+          (await s.skill.execute('m', const {}, procedureId: 'second')).output,
+          'second');
+      final missing =
+          await s.skill.execute('m', const {}, procedureId: 'nope');
+      expect(missing.success, isFalse);
     });
 
     test('executeWithContext accepts a caller-built SkillContext', () async {
