@@ -1,3 +1,8 @@
+## [0.2.7] - 2026-11-01 - mcp_philosophy floor for the web
+
+### Changed (dependency floor)
+- `mcp_philosophy` floor raised to `^0.1.5`: 0.1.4 does not compile for the web (an integer literal above 2^53), and `^0.1.4` allowed it.
+
 ## [0.2.6] - 2026-10-31 - mcp_skill 0.3.0 floor and procedureId on the skill facade
 
 ### Added
