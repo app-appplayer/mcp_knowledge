@@ -17,6 +17,12 @@ abstract class KnowledgeEvent {
 
 /// Fact confirmed event.
 class FactConfirmedEvent implements KnowledgeEvent {
+  const FactConfirmedEvent({
+    required this.factId,
+    required this.entityId,
+    required this.factType,
+    required this.timestamp,
+  });
   @override
   final DateTime timestamp;
 
@@ -31,17 +37,15 @@ class FactConfirmedEvent implements KnowledgeEvent {
 
   /// Fact type.
   final String factType;
-
-  const FactConfirmedEvent({
-    required this.factId,
-    required this.entityId,
-    required this.factType,
-    required this.timestamp,
-  });
 }
 
 /// Candidate created event.
 class CandidateCreatedEvent implements KnowledgeEvent {
+  const CandidateCreatedEvent({
+    required this.candidateId,
+    required this.confidence,
+    required this.timestamp,
+  });
   @override
   final DateTime timestamp;
 
@@ -53,16 +57,15 @@ class CandidateCreatedEvent implements KnowledgeEvent {
 
   /// Confidence score.
   final double confidence;
-
-  const CandidateCreatedEvent({
-    required this.candidateId,
-    required this.confidence,
-    required this.timestamp,
-  });
 }
 
 /// Summary refreshed event.
 class SummaryRefreshedEvent implements KnowledgeEvent {
+  const SummaryRefreshedEvent({
+    required this.summaryId,
+    required this.entityId,
+    required this.timestamp,
+  });
   @override
   final DateTime timestamp;
 
@@ -74,16 +77,18 @@ class SummaryRefreshedEvent implements KnowledgeEvent {
 
   /// Entity ID.
   final String entityId;
-
-  const SummaryRefreshedEvent({
-    required this.summaryId,
-    required this.entityId,
-    required this.timestamp,
-  });
 }
 
 /// Skill executed event.
 class SkillExecutedEvent implements KnowledgeEvent {
+  const SkillExecutedEvent({
+    required this.skillId,
+    required this.executionId,
+    required this.success,
+    required this.duration,
+    this.claimCount = 0,
+    required this.timestamp,
+  });
   @override
   final DateTime timestamp;
 
@@ -104,19 +109,16 @@ class SkillExecutedEvent implements KnowledgeEvent {
 
   /// Number of claims extracted.
   final int claimCount;
-
-  const SkillExecutedEvent({
-    required this.skillId,
-    required this.executionId,
-    required this.success,
-    required this.duration,
-    this.claimCount = 0,
-    required this.timestamp,
-  });
 }
 
 /// Claims recorded event.
 class ClaimsRecordedEvent implements KnowledgeEvent {
+  const ClaimsRecordedEvent({
+    required this.skillId,
+    required this.claimIds,
+    required this.entityId,
+    required this.timestamp,
+  });
   @override
   final DateTime timestamp;
 
@@ -131,17 +133,17 @@ class ClaimsRecordedEvent implements KnowledgeEvent {
 
   /// Entity ID.
   final String entityId;
-
-  const ClaimsRecordedEvent({
-    required this.skillId,
-    required this.claimIds,
-    required this.entityId,
-    required this.timestamp,
-  });
 }
 
 /// Profile applied event (runs the 3-pillar pipeline).
 class ProfileAppliedEvent implements KnowledgeEvent {
+  const ProfileAppliedEvent({
+    required this.profileId,
+    required this.entityId,
+    required this.duration,
+    this.decision,
+    required this.timestamp,
+  });
   @override
   final DateTime timestamp;
 
@@ -159,18 +161,16 @@ class ProfileAppliedEvent implements KnowledgeEvent {
 
   /// Decision action from the decision pillar.
   final DecisionAction? decision;
-
-  const ProfileAppliedEvent({
-    required this.profileId,
-    required this.entityId,
-    required this.duration,
-    this.decision,
-    required this.timestamp,
-  });
 }
 
 /// Bundle loaded event.
 class BundleLoadedEvent implements KnowledgeEvent {
+  const BundleLoadedEvent({
+    required this.bundleId,
+    required this.skillCount,
+    required this.profileCount,
+    required this.timestamp,
+  });
   @override
   final DateTime timestamp;
 
@@ -185,17 +185,16 @@ class BundleLoadedEvent implements KnowledgeEvent {
 
   /// Profiles loaded count.
   final int profileCount;
-
-  const BundleLoadedEvent({
-    required this.bundleId,
-    required this.skillCount,
-    required this.profileCount,
-    required this.timestamp,
-  });
 }
 
 /// Pipeline completed event.
 class PipelineCompletedEvent implements KnowledgeEvent {
+  const PipelineCompletedEvent({
+    required this.pipelineId,
+    required this.success,
+    required this.metrics,
+    required this.timestamp,
+  });
   @override
   final DateTime timestamp;
 
@@ -210,28 +209,27 @@ class PipelineCompletedEvent implements KnowledgeEvent {
 
   /// Execution metrics.
   final Map<String, dynamic> metrics;
-
-  const PipelineCompletedEvent({
-    required this.pipelineId,
-    required this.success,
-    required this.metrics,
-    required this.timestamp,
-  });
 }
 
 /// System shutdown event.
 class SystemShutdownEvent implements KnowledgeEvent {
+  const SystemShutdownEvent({required this.timestamp});
   @override
   final DateTime timestamp;
 
   @override
   String get type => 'system_shutdown';
-
-  const SystemShutdownEvent({required this.timestamp});
 }
 
 /// Philosophy evaluated event.
 class PhilosophyEvaluatedEvent implements KnowledgeEvent {
+  const PhilosophyEvaluatedEvent({
+    required this.contextId,
+    required this.confidence,
+    required this.prohibitionViolated,
+    required this.recommendedAction,
+    required this.timestamp,
+  });
   @override
   final DateTime timestamp;
 
@@ -249,18 +247,18 @@ class PhilosophyEvaluatedEvent implements KnowledgeEvent {
 
   /// Recommended action from evaluation.
   final String recommendedAction;
-
-  const PhilosophyEvaluatedEvent({
-    required this.contextId,
-    required this.confidence,
-    required this.prohibitionViolated,
-    required this.recommendedAction,
-    required this.timestamp,
-  });
 }
 
 /// Tension detected event.
 class TensionDetectedEvent implements KnowledgeEvent {
+  const TensionDetectedEvent({
+    required this.tensionId,
+    required this.severity,
+    required this.philosophyDirective,
+    required this.opposingDirective,
+    required this.layer,
+    required this.timestamp,
+  });
   @override
   final DateTime timestamp;
 
@@ -281,19 +279,17 @@ class TensionDetectedEvent implements KnowledgeEvent {
 
   /// Layer where the tension was detected.
   final String layer;
-
-  const TensionDetectedEvent({
-    required this.tensionId,
-    required this.severity,
-    required this.philosophyDirective,
-    required this.opposingDirective,
-    required this.layer,
-    required this.timestamp,
-  });
 }
 
 /// Prohibition violated event.
 class ProhibitionViolatedEvent implements KnowledgeEvent {
+  const ProhibitionViolatedEvent({
+    required this.prohibitionId,
+    required this.severity,
+    required this.detail,
+    required this.isHard,
+    required this.timestamp,
+  });
   @override
   final DateTime timestamp;
 
@@ -311,18 +307,18 @@ class ProhibitionViolatedEvent implements KnowledgeEvent {
 
   /// Whether this is a hard (blocking) prohibition.
   final bool isHard;
-
-  const ProhibitionViolatedEvent({
-    required this.prohibitionId,
-    required this.severity,
-    required this.detail,
-    required this.isHard,
-    required this.timestamp,
-  });
 }
 
 /// Evolution proposed event.
 class EvolutionProposedEvent implements KnowledgeEvent {
+  const EvolutionProposedEvent({
+    required this.proposalId,
+    required this.ethosId,
+    required this.evolutionType,
+    required this.confidence,
+    required this.description,
+    required this.timestamp,
+  });
   @override
   final DateTime timestamp;
 
@@ -343,13 +339,4 @@ class EvolutionProposedEvent implements KnowledgeEvent {
 
   /// Human-readable description.
   final String description;
-
-  const EvolutionProposedEvent({
-    required this.proposalId,
-    required this.ethosId,
-    required this.evolutionType,
-    required this.confidence,
-    required this.description,
-    required this.timestamp,
-  });
 }

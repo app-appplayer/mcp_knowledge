@@ -39,9 +39,8 @@ export 'package:mcp_knowledge_ops/mcp_knowledge_ops.dart' show OpsRuntime;
 
 /// Thin facade over [OpsRuntime] / standard ops ports.
 class OpsFacade {
-  final KnowledgeSystem _system;
-
   OpsFacade({required KnowledgeSystem system}) : _system = system;
+  final KnowledgeSystem _system;
 
   /// Access the orchestrator.
   KnowledgeSystem get system => _system;

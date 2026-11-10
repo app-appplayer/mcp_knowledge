@@ -4,10 +4,10 @@
 
 ## What `mcp_knowledge` provides
 
-- **`KnowledgeSystem`** — single entry point. Owns five facades and the event bus, carries the optional runtimes.
+- **`KnowledgeSystem`** — single entry point. Owns six facades and the event bus, carries the optional runtimes.
 - **`KnowledgePorts`** — flat container of 33 capability-named standard ports from `mcp_bundle`. Every field is optional.
 - **`KnowledgeConfig`** — hierarchical immutable configuration with three presets (`defaults`, `development`, `production`).
-- **5 thin facades** — `FactFacade`, `SkillFacade`, `ProfileFacade`, `PhilosophyFacade`, `OpsFacade`.
+- **6 thin facades** — `FactFacade`, `SkillFacade`, `ProfileFacade`, `PhilosophyFacade`, `OpsFacade`, `IngestFacade`.
 - **`KnowledgeEventBus`** + 13 typed event classes for reactive observability.
 
 ## What `mcp_knowledge` does NOT provide
@@ -16,7 +16,7 @@
 - ❌ No bridges — cross-domain wiring is the host's responsibility at runtime construction time.
 - ❌ No raw-accessor adapters — runtimes expose their own adapters.
 - ❌ No bundle file parsing — bundle handling is now an `OpsRuntime` workflow concern.
-- ❌ No inline pipeline implementation — pipeline execution is delegated to `OpsRuntime` via `system.ops.runPipeline`.
+- ❌ No inline pipeline implementation — ops pipelines run through `OpsRuntime` via `system.ops.runPipeline`, and ingestion runs `mcp_ingest`'s pipeline through `system.ingest`.
 
 ## Quick start
 
@@ -190,6 +190,18 @@ final workflows = await system.ops.listWorkflows();
 final handle = await system.ops.runWorkflow('skill_build', input);
 final pipelineHandle = await system.ops.runPipeline('curation_pipeline', input);
 final runbookExecution = await system.ops.runRunbook('my_runbook', input);
+```
+
+### IngestFacade
+
+The entry from a file, stream or text into the knowledge system. It runs an `mcp_ingest` pipeline (`IngestPipeline.defaults()` unless `KnowledgeSystem(ingestPipeline:)` gives one) and hands the Evidence and Fragments it produced to the fact graph, which takes them in as its own: the same audit chain entry and `extractedFrom` edges as evidence the engine ingests itself. A failed ingestion stores nothing and returns the result with its error.
+
+```dart
+final result = await system.ingest.ingestText(
+  'Shipping is included. Returns within 30 days.',
+  options: IngestOptions.defaults.copyWith(extractFragments: true),
+);
+final evidenceId = result.evidence!.evidenceId;
 ```
 
 ## Event bus

@@ -4,8 +4,6 @@
 /// facade actually invokes `SkillRuntime.run()` (no LLM-only fakery).
 library;
 
-import 'package:mcp_bundle/mcp_bundle.dart'
-    show Claim, ClaimType, ExecutionMetadata;
 import 'package:mcp_bundle/mcp_bundle.dart' as mb;
 import 'package:mcp_knowledge/mcp_knowledge.dart';
 import 'package:mcp_skill/mcp_skill.dart' as skill;
@@ -57,8 +55,7 @@ void main() {
       expect(event, isTrue);
     });
 
-    test(
-        'execute emits ClaimsRecordedEvent when the result contains claims',
+    test('execute emits ClaimsRecordedEvent when the result contains claims',
         () async {
       final registry = MemorySkillRegistry();
       final runtime = _ClaimEmittingSkillRuntime(
@@ -161,8 +158,7 @@ void main() {
       expect(
           (await s.skill.execute('m', const {}, procedureId: 'second')).output,
           'second');
-      final missing =
-          await s.skill.execute('m', const {}, procedureId: 'nope');
+      final missing = await s.skill.execute('m', const {}, procedureId: 'nope');
       expect(missing.success, isFalse);
     });
 
@@ -221,12 +217,11 @@ class _ClaimEmittingSkillRuntime extends skill.SkillRuntime {
 
 /// SkillRuntime test double that captures the context passed to [run].
 class _CapturingSkillRuntime extends skill.SkillRuntime {
-  skill.SkillContext? lastContext;
-
   _CapturingSkillRuntime({
     required super.registry,
     required super.ports,
   });
+  skill.SkillContext? lastContext;
 
   @override
   Future<SkillResult> run(skill.SkillContext context) async {

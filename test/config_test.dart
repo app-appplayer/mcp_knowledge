@@ -283,12 +283,14 @@ void main() {
 
   group('LogLevel', () {
     test('has correct values', () {
-      expect(LogLevel.values, containsAll([
-        LogLevel.debug,
-        LogLevel.info,
-        LogLevel.warning,
-        LogLevel.error,
-      ]));
+      expect(
+          LogLevel.values,
+          containsAll([
+            LogLevel.debug,
+            LogLevel.info,
+            LogLevel.warning,
+            LogLevel.error,
+          ]));
     });
   });
 

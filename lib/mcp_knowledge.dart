@@ -64,6 +64,11 @@ export 'src/facade/skill_facade.dart';
 export 'src/facade/profile_facade.dart';
 export 'src/facade/philosophy_facade.dart';
 export 'src/facade/ops_facade.dart';
+export 'src/facade/ingest_facade.dart';
+// `IngestFacade` takes `mcp_ingest`'s `IngestInput` and `IngestPipeline`, whose
+// names `mcp_knowledge_ops` also declares for its own pipeline spec; those two
+// are imported from `package:mcp_ingest/mcp_ingest.dart` directly.
+export 'package:mcp_ingest/mcp_ingest.dart' show IngestOptions, IngestResult;
 
 // === Events ===
 export 'src/events/knowledge_event.dart';

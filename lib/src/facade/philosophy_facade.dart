@@ -37,9 +37,8 @@ import '../events/knowledge_event.dart';
 /// All methods first check that the engine (or a bare `PhilosophyPort`)
 /// is configured. Throws `StateError` when nothing is wired.
 class PhilosophyFacade {
-  final KnowledgeSystem _system;
-
   PhilosophyFacade({required KnowledgeSystem system}) : _system = system;
+  final KnowledgeSystem _system;
 
   /// Access the orchestrator.
   KnowledgeSystem get system => _system;

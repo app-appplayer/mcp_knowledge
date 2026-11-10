@@ -131,51 +131,6 @@ export 'package:mcp_bundle/mcp_bundle.dart'
 /// All fields are optional. Hosts wire only the ports they need; the
 /// orchestrator gracefully degrades when a capability is absent.
 class KnowledgePorts {
-  // ── Data / fact-graph capabilities ──────────────────────────────────────
-  final FactsPort? facts;
-  final ClaimsPort? claims;
-  final EntitiesPort? entities;
-  final CandidatesPort? candidates;
-  final EvidencePort? evidence;
-  final PatternsPort? patterns;
-  final SummariesPort? summaries;
-  final RunsPort? runs;
-  final ContextBundlePort? contextBundle;
-  final RetrievalPort? retrieval;
-  final AssetPort? asset;
-  final IndexPort? index;
-
-  // ── Execution capabilities ──────────────────────────────────────────────
-  final SkillRuntimePort? skillRuntime;
-  final SkillRegistryPort? skillRegistry;
-  final McpPort? mcp;
-  final LlmPort? llm;
-
-  // ── Evaluation (profile) capabilities ───────────────────────────────────
-  final MetricsPort? metrics;
-  final AppraisalPort? appraisal;
-  final DecisionPort? decision;
-  final ExpressionPort? expression;
-  final ProfileSummariesPort? profileSummaries;
-
-  // ── Philosophy capabilities ─────────────────────────────────────────────
-  final PhilosophyPort? philosophy;
-  final EthosStorePort? ethosStore;
-
-  // ── Ops capabilities ────────────────────────────────────────────────────
-  final WorkflowPort? workflow;
-  final PipelinePort? pipeline;
-  final ScheduleTriggerPort? scheduler;
-  final AuditPort? audit;
-  final RunbookPort? runbook;
-
-  // ── Cross-cutting capabilities ──────────────────────────────────────────
-  final KvStoragePort? kvStorage;
-  final ApprovalPort? approval;
-  final NotificationPort? notification;
-  final EventPort? event;
-  final MetricPort? metric;
-
   const KnowledgePorts({
     this.facts,
     this.claims,
@@ -248,6 +203,50 @@ class KnowledgePorts {
       metric: StubMetricPort(),
     );
   }
+  // ── Data / fact-graph capabilities ──────────────────────────────────────
+  final FactsPort? facts;
+  final ClaimsPort? claims;
+  final EntitiesPort? entities;
+  final CandidatesPort? candidates;
+  final EvidencePort? evidence;
+  final PatternsPort? patterns;
+  final SummariesPort? summaries;
+  final RunsPort? runs;
+  final ContextBundlePort? contextBundle;
+  final RetrievalPort? retrieval;
+  final AssetPort? asset;
+  final IndexPort? index;
+
+  // ── Execution capabilities ──────────────────────────────────────────────
+  final SkillRuntimePort? skillRuntime;
+  final SkillRegistryPort? skillRegistry;
+  final McpPort? mcp;
+  final LlmPort? llm;
+
+  // ── Evaluation (profile) capabilities ───────────────────────────────────
+  final MetricsPort? metrics;
+  final AppraisalPort? appraisal;
+  final DecisionPort? decision;
+  final ExpressionPort? expression;
+  final ProfileSummariesPort? profileSummaries;
+
+  // ── Philosophy capabilities ─────────────────────────────────────────────
+  final PhilosophyPort? philosophy;
+  final EthosStorePort? ethosStore;
+
+  // ── Ops capabilities ────────────────────────────────────────────────────
+  final WorkflowPort? workflow;
+  final PipelinePort? pipeline;
+  final ScheduleTriggerPort? scheduler;
+  final AuditPort? audit;
+  final RunbookPort? runbook;
+
+  // ── Cross-cutting capabilities ──────────────────────────────────────────
+  final KvStoragePort? kvStorage;
+  final ApprovalPort? approval;
+  final NotificationPort? notification;
+  final EventPort? event;
+  final MetricPort? metric;
 
   /// Return a copy with the supplied fields replaced.
   KnowledgePorts copyWith({

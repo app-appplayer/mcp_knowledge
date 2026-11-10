@@ -6,11 +6,10 @@ import 'knowledge_event.dart';
 
 /// Event bus for knowledge system.
 class KnowledgeEventBus {
-  final StreamController<KnowledgeEvent> _controller;
-
   /// Create a new event bus.
   KnowledgeEventBus()
       : _controller = StreamController<KnowledgeEvent>.broadcast();
+  final StreamController<KnowledgeEvent> _controller;
 
   /// Emit an event.
   void emit(KnowledgeEvent event) {
@@ -30,10 +29,9 @@ class KnowledgeEventBus {
   /// Subscribe with handler.
   ///
   /// Subscriber exceptions are deliberately isolated from emitters and other
-  /// subscribers: handler throws are swallowed here, and stream-level errors
-  /// (which should not occur for a broadcast sink but are guarded as a
-  /// safeguard) are also suppressed. Callers that need custom error handling
-  /// should use [on] and wire their own `listen` with `onError`.
+  /// subscribers: handler throws are swallowed here. The bus only ever adds
+  /// events, never errors. Callers that need custom error handling should use
+  /// [on] and wire their own `listen`.
   StreamSubscription<T> subscribe<T extends KnowledgeEvent>(
     void Function(T event) handler,
   ) {
@@ -44,10 +42,6 @@ class KnowledgeEventBus {
         } catch (_) {
           // Subscriber exceptions are deliberately isolated from emitters.
         }
-      },
-      onError: (Object error, StackTrace stack) {
-        // Stream-level errors (should not occur for broadcast sinks but
-        // safeguarded here) are also isolated.
       },
     );
   }

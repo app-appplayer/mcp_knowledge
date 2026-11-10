@@ -34,9 +34,8 @@ export 'package:mcp_skill/mcp_skill.dart'
 /// methods. Every method requires `system.skillRuntime` to be non-null —
 /// otherwise it throws a `StateError`.
 class SkillFacade {
-  final KnowledgeSystem _system;
-
   SkillFacade({required KnowledgeSystem system}) : _system = system;
+  final KnowledgeSystem _system;
 
   /// Access the orchestrator.
   KnowledgeSystem get system => _system;
@@ -216,8 +215,7 @@ class SkillFacade {
     String? procedureId,
   }) {
     final now = DateTime.now();
-    final id =
-        executionId ?? 'exec-${now.microsecondsSinceEpoch}';
+    final id = executionId ?? 'exec-${now.microsecondsSinceEpoch}';
     return skill.SkillContext(
       contextId: 'ctx-$id',
       skillId: skillId,
@@ -237,8 +235,8 @@ class SkillFacade {
 
 /// Skill exception raised by [SkillFacade.run].
 class SkillException implements Exception {
-  final String message;
   SkillException(this.message);
+  final String message;
 
   @override
   String toString() => 'SkillException: $message';

@@ -65,9 +65,8 @@ export 'package:mcp_bundle/mcp_bundle.dart'
 
 /// Thin facade over the fact-graph standard ports.
 class FactFacade {
-  final KnowledgeSystem _system;
-
   FactFacade({required KnowledgeSystem system}) : _system = system;
+  final KnowledgeSystem _system;
 
   /// Access the orchestrator.
   KnowledgeSystem get system => _system;
@@ -77,25 +76,14 @@ class FactFacade {
   /// wired when no runtime is supplied explicitly.
   bool get isAvailable => true;
 
-  // ── Port resolution helpers (L0 is core-mandatory) ──────────────────────
-
-  FactsPort? _resolveFacts() => _system.factGraph.facts;
-  ClaimsPort? _resolveClaims() => _system.factGraph.claims;
-  EntitiesPort? _resolveEntities() => _system.factGraph.entities;
-  CandidatesPort? _resolveCandidates() => _system.factGraph.candidates;
-  EvidencePort? _resolveEvidence() => _system.factGraph.evidence;
-  PatternsPort? _resolvePatterns() => _system.factGraph.patterns;
-  SummariesPort? _resolveSummaries() => _system.factGraph.summaries;
-
-  /// Identity passthrough kept for callsite compatibility. The L0 fact-
-  /// graph runtime is core-mandatory, so port resolution never returns
-  /// null in practice; this helper remains as a defensive guard only.
-  T _require<T>(T? port, String name) {
-    if (port == null) {
-      throw StateError('$name not configured (L0 FactGraph runtime missing).');
-    }
-    return port;
-  }
+  // The fact-graph runtime is core-mandatory, so every port is present.
+  FactsPort get _facts => _system.factGraph.facts;
+  ClaimsPort get _claims => _system.factGraph.claims;
+  EntitiesPort get _entities => _system.factGraph.entities;
+  CandidatesPort get _candidates => _system.factGraph.candidates;
+  EvidencePort get _evidence => _system.factGraph.evidence;
+  PatternsPort get _patterns => _system.factGraph.patterns;
+  SummariesPort get _summaries => _system.factGraph.summaries;
 
   // ── L0: Evidence ─────────────────────────────────────────────────────────
 
@@ -104,19 +92,19 @@ class FactFacade {
     String content,
     String mimeType,
   ) async {
-    final port = _require(_resolveEvidence(), 'EvidencePort');
+    final port = _evidence;
     return port.extractFragments(content, mimeType);
   }
 
   /// Compute confidence for a fragment.
   Future<double> computeFragmentConfidence(String fragment) async {
-    final port = _require(_resolveEvidence(), 'EvidencePort');
+    final port = _evidence;
     return port.computeConfidence(fragment);
   }
 
   /// Classify a fragment.
   Future<String> classifyFragment(String fragment) async {
-    final port = _require(_resolveEvidence(), 'EvidencePort');
+    final port = _evidence;
     return port.classifyFragment(fragment);
   }
 
@@ -126,7 +114,7 @@ class FactFacade {
   Future<List<String>> createCandidates(
     List<CandidateRecord> candidates,
   ) async {
-    final port = _require(_resolveCandidates(), 'CandidatesPort');
+    final port = _candidates;
     final ids = await port.createCandidates(candidates);
     for (var i = 0; i < candidates.length; i++) {
       _system.eventBus.emit(CandidateCreatedEvent(
@@ -143,7 +131,7 @@ class FactFacade {
     String? workspaceId,
     int? limit,
   }) async {
-    final port = _require(_resolveCandidates(), 'CandidatesPort');
+    final port = _candidates;
     return port.getPendingCandidates(
       workspaceId ?? _system.config.workspaceId,
       limit: limit,
@@ -155,7 +143,7 @@ class FactFacade {
     String candidateId, {
     String? reviewerId,
   }) async {
-    final port = _require(_resolveCandidates(), 'CandidatesPort');
+    final port = _candidates;
     await port.confirmCandidate(candidateId, reviewerId: reviewerId);
     _system.eventBus.emit(FactConfirmedEvent(
       factId: candidateId,
@@ -171,7 +159,7 @@ class FactFacade {
     String reason, {
     String? reviewerId,
   }) async {
-    final port = _require(_resolveCandidates(), 'CandidatesPort');
+    final port = _candidates;
     await port.rejectCandidate(
       candidateId,
       reason,
@@ -183,13 +171,13 @@ class FactFacade {
 
   /// Query facts with a typed query.
   Future<List<FactRecord>> queryFacts(FactQuery query) async {
-    final port = _require(_resolveFacts(), 'FactsPort');
+    final port = _facts;
     return port.queryFacts(query);
   }
 
   /// Get a single fact by ID.
   Future<FactRecord?> getFact(String id) async {
-    final port = _require(_resolveFacts(), 'FactsPort');
+    final port = _facts;
     return port.getFact(id);
   }
 
@@ -200,7 +188,7 @@ class FactFacade {
     Period? period,
     int? limit,
   }) async {
-    final port = _require(_resolveFacts(), 'FactsPort');
+    final port = _facts;
     return port.queryFacts(FactQuery(
       workspaceId: workspaceId ?? _system.config.workspaceId,
       entityId: entityId,
@@ -211,13 +199,13 @@ class FactFacade {
 
   /// Write a batch of facts.
   Future<void> writeFacts(List<FactRecord> facts) async {
-    final port = _require(_resolveFacts(), 'FactsPort');
+    final port = _facts;
     await port.writeFacts(facts);
   }
 
   /// Delete facts by ID.
   Future<void> deleteFacts(List<String> ids) async {
-    final port = _require(_resolveFacts(), 'FactsPort');
+    final port = _facts;
     await port.deleteFacts(ids);
   }
 
@@ -225,13 +213,13 @@ class FactFacade {
 
   /// Get an entity by ID.
   Future<EntityRecord?> getEntity(String entityId) async {
-    final port = _require(_resolveEntities(), 'EntitiesPort');
+    final port = _entities;
     return port.getEntity(entityId);
   }
 
   /// Merge two entities.
   Future<EntityRecord> mergeEntities(String surviving, String absorbed) async {
-    final port = _require(_resolveEntities(), 'EntitiesPort');
+    final port = _entities;
     return port.mergeEntities(surviving, absorbed);
   }
 
@@ -242,7 +230,7 @@ class FactFacade {
     List<Claim> claims, {
     List<String>? evidenceRefs,
   }) async {
-    final port = _require(_resolveClaims(), 'ClaimsPort');
+    final port = _claims;
     await port.writeClaims(claims, evidenceRefs: evidenceRefs);
     _system.eventBus.emit(ClaimsRecordedEvent(
       skillId: '',
@@ -254,7 +242,7 @@ class FactFacade {
 
   /// Query claims with a typed query.
   Future<List<Claim>> queryClaims(ClaimQuery query) async {
-    final port = _require(_resolveClaims(), 'ClaimsPort');
+    final port = _claims;
     return port.queryClaims(query);
   }
 
@@ -266,7 +254,7 @@ class FactFacade {
     String summaryType, {
     Period? period,
   }) async {
-    final port = _require(_resolveSummaries(), 'SummariesPort');
+    final port = _summaries;
     return port.getSummary(entityId, summaryType, period: period);
   }
 
@@ -276,7 +264,7 @@ class FactFacade {
     String summaryType, {
     Period? period,
   }) async {
-    final port = _require(_resolveSummaries(), 'SummariesPort');
+    final port = _summaries;
     final result = await port.refreshSummary(
       entityId,
       summaryType,
@@ -295,7 +283,7 @@ class FactFacade {
     List<String> entityIds, {
     String? summaryType,
   }) async {
-    final port = _require(_resolveSummaries(), 'SummariesPort');
+    final port = _summaries;
     return port.markSummariesStale(entityIds, summaryType: summaryType);
   }
 
@@ -303,19 +291,19 @@ class FactFacade {
 
   /// Store a pattern.
   Future<String> storePattern(PatternRecord pattern) async {
-    final port = _require(_resolvePatterns(), 'PatternsPort');
+    final port = _patterns;
     return port.storePattern(pattern);
   }
 
   /// Query patterns.
   Future<List<PatternRecord>> queryPatterns(PatternQuery query) async {
-    final port = _require(_resolvePatterns(), 'PatternsPort');
+    final port = _patterns;
     return port.queryPatterns(query);
   }
 
   /// Get a pattern by ID.
   Future<PatternRecord?> getPattern(String id) async {
-    final port = _require(_resolvePatterns(), 'PatternsPort');
+    final port = _patterns;
     return port.getPattern(id);
   }
 }

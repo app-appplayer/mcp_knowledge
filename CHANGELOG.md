@@ -1,3 +1,16 @@
+## [0.3.0] - 2026-11-04 - Ingest entry
+
+### Breaking (behaviour through the dependency)
+- `mcp_knowledge_ops` moves to `^0.4.0`: the cascade refresh reports a node refreshed only when the host's refresher ran (see that CHANGELOG).
+- `mcp_fact_graph` moves to `^0.3.0`; the fact facade's calls follow its changed behaviour (see that CHANGELOG): `FactFacade.mergeEntities` re-points facts and relations, `confirmCandidate` links the fact to its entities, `buildContextBundle` is scoped to the workspace and query.
+
+### Added
+- `IngestFacade` (`KnowledgeSystem.ingest`): `ingest(IngestInput, {workspaceId, options})` and `ingestText(String, {…})` run an `mcp_ingest` pipeline and save the Evidence and Fragments in the fact graph. A failed ingestion saves nothing and returns the result with its error. `KnowledgeSystem(ingestPipeline:)` supplies the pipeline (default `IngestPipeline.defaults()`).
+- `IngestOptions` and `IngestResult` are exported. `IngestInput` and `IngestPipeline` share names with `mcp_knowledge_ops` types; import them from `package:mcp_ingest/mcp_ingest.dart`.
+
+### Changed (dependency)
+- New dependency `mcp_ingest ^0.2.0`; `mcp_fact_graph` floor `^0.3.0` (the facade hands the result to `FactGraphRuntime.evidenceService.adoptEvidence`, so ingested evidence gets the audit chain entry and the `extractedFrom` edges that evidence ingested by the engine gets). `mcp_bundle` `^0.4.14` and `mcp_philosophy` `^0.1.7` (the current releases).
+
 ## [0.2.7] - 2026-11-01 - mcp_philosophy floor for the web
 
 ### Changed (dependency floor)

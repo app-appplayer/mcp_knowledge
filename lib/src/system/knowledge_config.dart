@@ -5,6 +5,19 @@ library;
 
 /// System-wide configuration.
 class KnowledgeConfig {
+  const KnowledgeConfig({
+    this.workspaceId = 'default',
+    this.factGraph = const FactGraphConfig(),
+    this.skill = const SkillConfig(),
+    this.profile = const ProfileConfig(),
+    this.pipeline = const PipelineConfig(),
+    this.scheduler = const SchedulerConfig(),
+    this.events = const EventConfig(),
+    this.logging = const LoggingConfig(),
+    this.features = const FeatureFlags(),
+    this.philosophy = const PhilosophyConfig(),
+  });
+
   /// Workspace identifier.
   final String workspaceId;
 
@@ -34,19 +47,6 @@ class KnowledgeConfig {
 
   /// Philosophy configuration.
   final PhilosophyConfig philosophy;
-
-  const KnowledgeConfig({
-    this.workspaceId = 'default',
-    this.factGraph = const FactGraphConfig(),
-    this.skill = const SkillConfig(),
-    this.profile = const ProfileConfig(),
-    this.pipeline = const PipelineConfig(),
-    this.scheduler = const SchedulerConfig(),
-    this.events = const EventConfig(),
-    this.logging = const LoggingConfig(),
-    this.features = const FeatureFlags(),
-    this.philosophy = const PhilosophyConfig(),
-  });
 
   /// Default configuration.
   static const KnowledgeConfig defaults = KnowledgeConfig();
@@ -102,6 +102,13 @@ class KnowledgeConfig {
 
 /// FactGraph configuration.
 class FactGraphConfig {
+  const FactGraphConfig({
+    this.candidateAutoConfirmThreshold = 0.95,
+    this.summaryRefreshInterval = const Duration(hours: 24),
+    this.maxEvidenceSize = 1024 * 1024,
+    this.enableConsistencyCheck = true,
+  });
+
   /// Auto-confirm threshold for candidates.
   final double candidateAutoConfirmThreshold;
 
@@ -113,17 +120,17 @@ class FactGraphConfig {
 
   /// Enable consistency checking.
   final bool enableConsistencyCheck;
-
-  const FactGraphConfig({
-    this.candidateAutoConfirmThreshold = 0.95,
-    this.summaryRefreshInterval = const Duration(hours: 24),
-    this.maxEvidenceSize = 1024 * 1024,
-    this.enableConsistencyCheck = true,
-  });
 }
 
 /// Skill configuration.
 class SkillConfig {
+  const SkillConfig({
+    this.defaultTimeout = const Duration(minutes: 5),
+    this.maxConcurrentExecutions = 10,
+    this.recordClaimsByDefault = true,
+    this.defaultBudget,
+  });
+
   /// Default timeout for skill execution.
   final Duration defaultTimeout;
 
@@ -135,13 +142,6 @@ class SkillConfig {
 
   /// Default execution budget (null uses skill defaults).
   final ExecutionBudgetConfig? defaultBudget;
-
-  const SkillConfig({
-    this.defaultTimeout = const Duration(minutes: 5),
-    this.maxConcurrentExecutions = 10,
-    this.recordClaimsByDefault = true,
-    this.defaultBudget,
-  });
 
   /// Create a copy with modifications.
   SkillConfig copyWith({
@@ -163,6 +163,15 @@ class SkillConfig {
 
 /// Execution budget configuration (mirrors mcp_skill ExecutionBudget).
 class ExecutionBudgetConfig {
+  const ExecutionBudgetConfig({
+    this.maxTokens = 100000,
+    this.maxDuration = const Duration(minutes: 5),
+    this.maxSteps = 50,
+    this.maxLlmCalls = 20,
+    this.maxMcpCalls = 100,
+    this.maxConcurrency = 5,
+  });
+
   /// Maximum tokens.
   final int maxTokens;
 
@@ -180,19 +189,17 @@ class ExecutionBudgetConfig {
 
   /// Maximum concurrency.
   final int maxConcurrency;
-
-  const ExecutionBudgetConfig({
-    this.maxTokens = 100000,
-    this.maxDuration = const Duration(minutes: 5),
-    this.maxSteps = 50,
-    this.maxLlmCalls = 20,
-    this.maxMcpCalls = 100,
-    this.maxConcurrency = 5,
-  });
 }
 
 /// Profile configuration.
 class ProfileConfig {
+  const ProfileConfig({
+    this.enableAppraisalByDefault = true,
+    this.appraisalThreshold = 70.0,
+    this.maxContentLength = 100000,
+    this.conflictResolution = 'merge',
+  });
+
   /// Enable appraisal by default.
   final bool enableAppraisalByDefault;
 
@@ -204,17 +211,17 @@ class ProfileConfig {
 
   /// Conflict resolution strategy for multi-profile scenarios.
   final String conflictResolution;
-
-  const ProfileConfig({
-    this.enableAppraisalByDefault = true,
-    this.appraisalThreshold = 70.0,
-    this.maxContentLength = 100000,
-    this.conflictResolution = 'merge',
-  });
 }
 
 /// Pipeline configuration.
 class PipelineConfig {
+  const PipelineConfig({
+    this.checkpointEnabled = false,
+    this.checkpointInterval = const Duration(seconds: 30),
+    this.maxRetries = 3,
+    this.maxConcurrency = 4,
+  });
+
   /// Enable checkpointing.
   final bool checkpointEnabled;
 
@@ -226,17 +233,16 @@ class PipelineConfig {
 
   /// Maximum concurrent pipeline stages.
   final int maxConcurrency;
-
-  const PipelineConfig({
-    this.checkpointEnabled = false,
-    this.checkpointInterval = const Duration(seconds: 30),
-    this.maxRetries = 3,
-    this.maxConcurrency = 4,
-  });
 }
 
 /// Scheduler configuration.
 class SchedulerConfig {
+  const SchedulerConfig({
+    this.enabled = true,
+    this.timezone = 'UTC',
+    this.maxConcurrentJobs = 5,
+  });
+
   /// Whether scheduler is enabled.
   final bool enabled;
 
@@ -245,30 +251,30 @@ class SchedulerConfig {
 
   /// Maximum concurrent jobs.
   final int maxConcurrentJobs;
-
-  const SchedulerConfig({
-    this.enabled = true,
-    this.timezone = 'UTC',
-    this.maxConcurrentJobs = 5,
-  });
 }
 
 /// Event configuration.
 class EventConfig {
+  const EventConfig({
+    this.bufferSize = 1000,
+    this.persistEvents = false,
+  });
+
   /// Event buffer size.
   final int bufferSize;
 
   /// Whether to persist events.
   final bool persistEvents;
-
-  const EventConfig({
-    this.bufferSize = 1000,
-    this.persistEvents = false,
-  });
 }
 
 /// Logging configuration.
 class LoggingConfig {
+  const LoggingConfig({
+    this.level = LogLevel.info,
+    this.includeStackTrace = false,
+    this.enableAuditLog = false,
+  });
+
   /// Log level.
   final LogLevel level;
 
@@ -277,12 +283,6 @@ class LoggingConfig {
 
   /// Enable audit logging.
   final bool enableAuditLog;
-
-  const LoggingConfig({
-    this.level = LogLevel.info,
-    this.includeStackTrace = false,
-    this.enableAuditLog = false,
-  });
 }
 
 /// Log levels.
@@ -295,6 +295,13 @@ enum LogLevel {
 
 /// Feature flags.
 class FeatureFlags {
+  const FeatureFlags({
+    this.enableExperimentalPatternMining = false,
+    this.enableAutoSummarization = true,
+    this.enableAutoConfirm = false,
+    this.enableHotReload = false,
+  });
+
   /// Enable experimental pattern mining.
   final bool enableExperimentalPatternMining;
 
@@ -306,17 +313,21 @@ class FeatureFlags {
 
   /// Enable hot reload.
   final bool enableHotReload;
-
-  const FeatureFlags({
-    this.enableExperimentalPatternMining = false,
-    this.enableAutoSummarization = true,
-    this.enableAutoConfirm = false,
-    this.enableHotReload = false,
-  });
 }
 
 /// Philosophy configuration.
 class PhilosophyConfig {
+  const PhilosophyConfig({
+    this.enabled = true,
+    this.enablePreGeneration = true,
+    this.enableDuringGeneration = true,
+    this.enablePostGeneration = true,
+    this.enableTensionDetection = true,
+    this.enableEvolution = false,
+    this.minConfidenceThreshold = 0.5,
+    this.conflictStrategy = 'priority',
+  });
+
   /// Whether philosophy evaluation is enabled.
   final bool enabled;
 
@@ -340,15 +351,4 @@ class PhilosophyConfig {
 
   /// Conflict resolution strategy.
   final String conflictStrategy;
-
-  const PhilosophyConfig({
-    this.enabled = true,
-    this.enablePreGeneration = true,
-    this.enableDuringGeneration = true,
-    this.enablePostGeneration = true,
-    this.enableTensionDetection = true,
-    this.enableEvolution = false,
-    this.minConfidenceThreshold = 0.5,
-    this.conflictStrategy = 'priority',
-  });
 }

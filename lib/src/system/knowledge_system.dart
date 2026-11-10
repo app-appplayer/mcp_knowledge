@@ -21,6 +21,7 @@
 library;
 
 import 'package:mcp_fact_graph/mcp_fact_graph.dart' show FactGraphRuntime;
+import 'package:mcp_ingest/mcp_ingest.dart' show IngestPipeline;
 import 'package:mcp_philosophy/mcp_philosophy.dart' show PhilosophyEngine;
 
 import 'knowledge_config.dart';
@@ -32,6 +33,7 @@ import '../facade/skill_facade.dart';
 import '../facade/profile_facade.dart';
 import '../facade/philosophy_facade.dart';
 import '../facade/ops_facade.dart';
+import '../facade/ingest_facade.dart';
 
 /// Unified knowledge management orchestrator.
 ///
@@ -39,6 +41,68 @@ import '../facade/ops_facade.dart';
 /// facades. The runtimes themselves are constructed and wired by the host
 /// — `KnowledgeSystem` only orchestrates them.
 class KnowledgeSystem {
+  /// Create a new knowledge system.
+  ///
+  /// L0 FactGraph is required. When `factGraph` is null, a default
+  /// `FactGraphRuntime.inMemory()` is auto-wired so the system works
+  /// with zero external adapters out of the box.
+  ///
+  /// L1 Skill / L2 Profile / L3 Philosophy / Ops are opt-in. Pass only
+  /// the runtimes for layers in scope. Inactive layer facades will throw
+  /// `StateError` when invoked.
+  KnowledgeSystem({
+    required this.config,
+    KnowledgePorts? ports,
+    FactGraphRuntime? factGraph,
+    this.skillRuntime,
+    this.profileRuntime,
+    this.philosophyEngine,
+    this.opsRuntime,
+    IngestPipeline? ingestPipeline,
+    KnowledgeEventBus? eventBus,
+  })  : _ingestPipeline = ingestPipeline,
+        ports = ports ?? const KnowledgePorts(),
+        factGraph = factGraph ??
+            FactGraphRuntime.inMemory(
+              defaultWorkspaceId: config.workspaceId,
+            ),
+        eventBus = eventBus ?? KnowledgeEventBus() {
+    _initialize();
+  }
+
+  /// Default-config shorthand factory. L0 FactGraph is auto-wired.
+  factory KnowledgeSystem.defaults({
+    KnowledgePorts? ports,
+    FactGraphRuntime? factGraph,
+    SkillRuntime? skillRuntime,
+    ProfileRuntime? profileRuntime,
+    PhilosophyEngine? philosophyEngine,
+    OpsRuntime? opsRuntime,
+  }) {
+    return KnowledgeSystem(
+      config: KnowledgeConfig.defaults,
+      ports: ports,
+      factGraph: factGraph,
+      skillRuntime: skillRuntime,
+      profileRuntime: profileRuntime,
+      philosophyEngine: philosophyEngine,
+      opsRuntime: opsRuntime,
+    );
+  }
+
+  /// Zero-config factory for tests and quick-starts. Auto-wires
+  /// L0 `FactGraphRuntime.inMemory()` and `KnowledgePorts.stub()`
+  /// (which provides `InMemoryKvStoragePort` and `InMemoryEventPort`).
+  /// The L0 FactGraph cycle (evidence → candidates → facts → queries)
+  /// works immediately without external adapters. L1~L3+Ops runtimes
+  /// remain null; their facades throw `StateError` when invoked.
+  factory KnowledgeSystem.stub() {
+    return KnowledgeSystem(
+      config: KnowledgeConfig.defaults,
+      ports: KnowledgePorts.stub(),
+    );
+  }
+
   /// System configuration.
   final KnowledgeConfig config;
 
@@ -91,64 +155,10 @@ class KnowledgeSystem {
   /// Simplified ops (workflow / pipeline / runbook) operations.
   late final OpsFacade ops;
 
-  /// Create a new knowledge system.
-  ///
-  /// L0 FactGraph is required. When `factGraph` is null, a default
-  /// `FactGraphRuntime.inMemory()` is auto-wired so the system works
-  /// with zero external adapters out of the box.
-  ///
-  /// L1 Skill / L2 Profile / L3 Philosophy / Ops are opt-in. Pass only
-  /// the runtimes for layers in scope. Inactive layer facades will throw
-  /// `StateError` when invoked.
-  KnowledgeSystem({
-    required this.config,
-    KnowledgePorts? ports,
-    FactGraphRuntime? factGraph,
-    this.skillRuntime,
-    this.profileRuntime,
-    this.philosophyEngine,
-    this.opsRuntime,
-    KnowledgeEventBus? eventBus,
-  })  : ports = ports ?? const KnowledgePorts(),
-        factGraph = factGraph ?? FactGraphRuntime.inMemory(
-          defaultWorkspaceId: config.workspaceId,
-        ),
-        eventBus = eventBus ?? KnowledgeEventBus() {
-    _initialize();
-  }
+  /// Ingestion entry: file / stream / text into the fact graph.
+  late final IngestFacade ingest;
 
-  /// Default-config shorthand factory. L0 FactGraph is auto-wired.
-  factory KnowledgeSystem.defaults({
-    KnowledgePorts? ports,
-    FactGraphRuntime? factGraph,
-    SkillRuntime? skillRuntime,
-    ProfileRuntime? profileRuntime,
-    PhilosophyEngine? philosophyEngine,
-    OpsRuntime? opsRuntime,
-  }) {
-    return KnowledgeSystem(
-      config: KnowledgeConfig.defaults,
-      ports: ports,
-      factGraph: factGraph,
-      skillRuntime: skillRuntime,
-      profileRuntime: profileRuntime,
-      philosophyEngine: philosophyEngine,
-      opsRuntime: opsRuntime,
-    );
-  }
-
-  /// Zero-config factory for tests and quick-starts. Auto-wires
-  /// L0 `FactGraphRuntime.inMemory()` and `KnowledgePorts.stub()`
-  /// (which provides `InMemoryKvStoragePort` and `InMemoryEventPort`).
-  /// The L0 FactGraph cycle (evidence → candidates → facts → queries)
-  /// works immediately without external adapters. L1~L3+Ops runtimes
-  /// remain null; their facades throw `StateError` when invoked.
-  factory KnowledgeSystem.stub() {
-    return KnowledgeSystem(
-      config: KnowledgeConfig.defaults,
-      ports: KnowledgePorts.stub(),
-    );
-  }
+  final IngestPipeline? _ingestPipeline;
 
   void _initialize() {
     facts = FactFacade(system: this);
@@ -156,6 +166,7 @@ class KnowledgeSystem {
     profile = ProfileFacade(system: this);
     philosophy = PhilosophyFacade(system: this);
     ops = OpsFacade(system: this);
+    ingest = IngestFacade(system: this, pipeline: _ingestPipeline);
   }
 
   /// Gracefully shutdown the system. Closes the L0 FactGraph runtime,

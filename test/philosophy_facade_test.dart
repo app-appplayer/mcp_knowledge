@@ -1,9 +1,7 @@
 /// PhilosophyFacade tests focused on the multi-ethos resolution path.
 library;
 
-import 'package:mcp_bundle/mcp_bundle.dart';
 import 'package:mcp_knowledge/mcp_knowledge.dart';
-import 'package:mcp_philosophy/mcp_philosophy.dart' show PhilosophyEngine;
 import 'package:test/test.dart';
 
 class _MemEthosStore implements EthosStorePort {
@@ -116,8 +114,7 @@ void main() {
       );
       addTearDown(system.shutdown);
 
-      final ethos =
-          await system.philosophy.getEthosById('editorial-core');
+      final ethos = await system.philosophy.getEthosById('editorial-core');
       // Falls through to engine.getEthos() which returns the active one.
       expect(ethos.id, 'ads-core');
     });

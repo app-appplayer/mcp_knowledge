@@ -40,7 +40,8 @@ void main() {
       final skillEvents = <SkillExecutedEvent>[];
 
       final factSub = eventBus.on<FactConfirmedEvent>().listen(factEvents.add);
-      final skillSub = eventBus.on<SkillExecutedEvent>().listen(skillEvents.add);
+      final skillSub =
+          eventBus.on<SkillExecutedEvent>().listen(skillEvents.add);
 
       eventBus.emit(FactConfirmedEvent(
         factId: 'f1',
@@ -225,13 +226,15 @@ void main() {
 
       await Future<void>.delayed(const Duration(milliseconds: 10));
 
-      expect(events, containsAll([
-        'fact_confirmed',
-        'candidate_created',
-        'summary_refreshed',
-        'profile_applied',
-        'pipeline_completed',
-      ]));
+      expect(
+          events,
+          containsAll([
+            'fact_confirmed',
+            'candidate_created',
+            'summary_refreshed',
+            'profile_applied',
+            'pipeline_completed',
+          ]));
     });
   });
 }

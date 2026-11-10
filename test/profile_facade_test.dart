@@ -96,8 +96,7 @@ void main() {
       expect(system.profile.list(), isEmpty);
     });
 
-    test('apply still throws StateError when profileRuntime is null',
-        () async {
+    test('apply still throws StateError when profileRuntime is null', () async {
       final system = KnowledgeSystem(
         config: KnowledgeConfig.defaults,
       );

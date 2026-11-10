@@ -85,8 +85,7 @@ void main() {
       expect(captured!.profileCount, 1);
     });
 
-    test('loadBundle handles manifests with a nested components map',
-        () async {
+    test('loadBundle handles manifests with a nested components map', () async {
       BundleLoadedEvent? captured;
       system.eventBus.on<BundleLoadedEvent>().listen((e) => captured = e);
       await system.ops.loadBundle('bundle-b', {

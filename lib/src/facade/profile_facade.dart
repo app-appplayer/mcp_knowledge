@@ -28,9 +28,8 @@ export 'package:mcp_profile/mcp_profile.dart'
 
 /// Thin facade over [profile.ProfileRuntime].
 class ProfileFacade {
-  final KnowledgeSystem _system;
-
   ProfileFacade({required KnowledgeSystem system}) : _system = system;
+  final KnowledgeSystem _system;
 
   /// Access the orchestrator.
   KnowledgeSystem get system => _system;
@@ -128,13 +127,12 @@ class ProfileFacade {
     if (rt == null) return const [];
     return rt.registry.all;
   }
-
 }
 
 /// Profile exception raised by the facade.
 class ProfileException implements Exception {
-  final String message;
   ProfileException(this.message);
+  final String message;
 
   @override
   String toString() => 'ProfileException: $message';
